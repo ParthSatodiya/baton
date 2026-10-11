@@ -76,6 +76,64 @@ Read [DESIGN.md](DESIGN.md) first. Colour and font tokens live in
 `src/app/globals.css` (`@theme`), shared classes in `src/lib/ui.ts`. Never
 hard-code a hex or a Tailwind palette name in a component.
 
+## Commit messages
+
+Conventional prefix, and a scope when there is an obvious one:
+
+```
+feat(auth): GitHub sign-in, verified addresses only
+fix(board): the forward arrow could not see a weekend standup ahead of it
+chore(deps): next 16.4.0
+```
+
+`feat` and `fix` reach the changelog. `chore`, `docs`, `refactor`, `test` and
+`style` do not.
+
+### Write the changelog line while you still have the context
+
+The release script reads the subject, and subjects are written for the person
+reviewing the diff. When the user-facing wording is different — which is most of
+the time — say so in a `Changelog:` trailer:
+
+```
+feat(auth): GitHub sign-in, verified addresses only
+
+Changelog: Sign in with GitHub. Only addresses GitHub has verified are
+ accepted, because in RelayStand your email is your identity.
+```
+
+Continuation lines are indented by one space, the way git expects them.
+
+Two things the trailer is for, and neither can be worked out later from a commit
+list:
+
+- **`Changelog: skip`** — the commit is invisible to users. The usual case is a
+  fix for something that broke after the last release, so nobody running a
+  release ever saw the bug.
+- **A different line from the subject** — "keep instrumentation.ts edge-safe"
+  tells a reviewer what changed and a user nothing at all.
+
+With no trailer the subject is used as-is, which is fine when the two agree.
+
+### Breaking changes
+
+Mark them. A `!` before the colon, and a footer saying what someone has to do:
+
+```
+feat(docker)!: run as the node user
+
+BREAKING-CHANGE: existing relaystand-data volumes are root-owned, so the
+ container cannot write to them until a one-time chown. Command in README.
+```
+
+Hyphenated, not `BREAKING CHANGE:` with a space. Conventional Commits treats the
+two as synonyms, but a git trailer token cannot contain a space, so only the
+hyphenated one comes back from `git log --format='%(trailers:key=...)'`. The
+spaced form parses as nothing and the script would miss it.
+
+If upgrading needs a human to do something, it is breaking, even when no API
+changed.
+
 ## Pull requests
 
 - One concern per PR.

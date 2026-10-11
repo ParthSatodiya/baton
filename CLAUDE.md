@@ -89,6 +89,23 @@ docker compose up -d --build
 Copy `.env.example` to `.env` and fill it before first run. Without an OAuth
 provider configured, `/login` says so instead of breaking.
 
+## Commits
+
+Conventional prefix plus a scope. `feat` and `fix` reach the changelog; `chore`,
+`docs`, `refactor`, `test` and `style` do not.
+
+The release script reads the **subject**, so when the user-facing wording
+differs from it — usually — put the real line in a `Changelog:` trailer, with
+continuation lines indented one space. `Changelog: skip` drops the commit from
+the changelog entirely, which is right for anything that fixes a bug introduced
+since the last release: no user ever saw it.
+
+Mark breaking changes with `!` before the colon and a `BREAKING-CHANGE:` footer
+saying what the operator has to do — hyphenated, because a git trailer token
+cannot contain a space and the spaced form parses as nothing. Needing a manual
+step on upgrade counts, even when no API changed. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for examples.
+
 ## Agent skills
 
 ### Issue tracker
