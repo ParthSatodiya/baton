@@ -43,6 +43,17 @@ export async function teamContext(email: string, teamId: number) {
 }
 
 /**
+ * Who may start a team's day. Any member who writes — deliberately not lead-only,
+ * so the standup still happens when the lead is away. Starting a day writes items
+ * for the whole team, which is why an observer may not.
+ */
+export async function requireStandupStarter(email: string, teamId: number) {
+  const ctx = await teamContext(email, teamId);
+  if (!ctx.canWrite) throw new HttpError(403, 'Observers can only read this board');
+  return ctx;
+}
+
+/**
  * The member row named by a URL segment or a request body, but only if it
  * really is on this team. Being a lead of team A says nothing about who a
  * given member id belongs to — ids are sequential across every org.

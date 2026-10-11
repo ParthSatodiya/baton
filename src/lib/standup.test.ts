@@ -30,6 +30,7 @@ let taskLink: Links['taskLink'];
 let teamContext: Access['teamContext'];
 let parseRecipients: Emails['parseRecipients'];
 let requireTeamMember: Access['requireTeamMember'];
+let requireStandupStarter: Access['requireStandupStarter'];
 let auditTeamFilter: Audit['auditTeamFilter'];
 let logEvent: Audit['logEvent'];
 let buildOrgExport: Export['buildOrgExport'];
@@ -56,7 +57,7 @@ before(async () => {
     await import('@/lib/standup'));
   ({ monthGrid } = await import('@/lib/days'));
   ({ taskLink } = await import('@/lib/links'));
-  ({ teamContext, requireTeamMember } = await import('@/lib/access'));
+  ({ teamContext, requireTeamMember, requireStandupStarter } = await import('@/lib/access'));
   ({ auditTeamFilter, logEvent } = await import('@/lib/audit'));
   ({ buildOrgExport } = await import('@/lib/export'));
   ({ parseRecipients } = await import('@/lib/emails'));
@@ -235,6 +236,16 @@ test('a task cannot be handed to someone who has left the team', async () => {
   const item = await prisma.standupItem.findFirstOrThrow({ where: { standupId: thu.id } });
   await assert.rejects(() => assignItem(item.id, gone.id), /no longer on the team/);
   await assert.rejects(() => assignItem(item.id, 9999), /not on this team/);
+});
+
+test('the day does not wait for the lead: any member can start it, an observer cannot', async () => {
+  const member = await requireStandupStarter('bo@company.com', team.id);
+  assert.equal(member.isLead, false, 'bo is not a lead, and still starts the day');
+
+  await assert.rejects(
+    () => requireStandupStarter('watcher@company.com', team.id),
+    /Observers can only read/
+  );
 });
 
 test('the org is the outer gate, and an observer never writes', async () => {

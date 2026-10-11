@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/db';
 import { HttpError } from '@/lib/http';
-import { orgMembershipOf, teamContext } from '@/lib/access';
+import { orgMembershipOf, requireStandupStarter, teamContext } from '@/lib/access';
 
 export { HttpError };
 export { teamContext } from '@/lib/access';
@@ -39,6 +39,11 @@ export async function requireOrgAdmin(slugOrId: string | number) {
 export async function requireMembership(teamId: number) {
   const user = await requireUser();
   return { user, ...(await teamContext(user.email, teamId)) };
+}
+
+export async function requireStarter(teamId: number) {
+  const user = await requireUser();
+  return { user, ...(await requireStandupStarter(user.email, teamId)) };
 }
 
 export async function requireLead(teamId: number) {
