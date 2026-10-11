@@ -8,6 +8,11 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # prisma.config.ts resolves env('DATABASE_URL') when the config LOADS, so
+    # every prisma command needs it, not just the build. There is no .env in
+    # CI to fall back on — which is why this only ever broke here.
+    env:
+      DATABASE_URL: file:./ci.db
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -20,5 +25,3 @@ jobs:
       - run: npm test
       # A build-time value only; the real URL comes from the environment.
       - run: npm run build
-        env:
-          DATABASE_URL: file:./ci.db

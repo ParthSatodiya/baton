@@ -10,6 +10,11 @@ jobs:
   # more annoying to withdraw than a workflow re-run. Check before publishing.
   verify:
     runs-on: ubuntu-latest
+    # prisma.config.ts resolves env('DATABASE_URL') when the config LOADS, so
+    # every prisma command needs it, not just the build. There is no .env in
+    # CI to fall back on — which is why this only ever broke here.
+    env:
+      DATABASE_URL: file:./ci.db
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -21,8 +26,6 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
-        env:
-          DATABASE_URL: file:./ci.db
 
   publish:
     needs: verify
