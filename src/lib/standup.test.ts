@@ -905,14 +905,26 @@ test('release notes come out of CHANGELOG.md, one version at a time', async () =
 });
 
 test('a wrapped trailer becomes one changelog line', async () => {
-  const { readCommits } = await import('../../scripts/release.mjs');
-  // Reads this repo's own history: the commit that added the release workflow
-  // carries a Changelog trailer written across two lines.
-  const wrapped = readCommits('').find((c: { changelog: string }) =>
-    c.changelog.startsWith('Official container images')
+  const { parseLog, RECORD, FIELD } = await import('../../scripts/release.mjs');
+  // A fixture, not this repo's history: CI checks out shallow, so a test that
+  // goes looking for a real commit passes here and fails there.
+  const raw =
+    [
+      'aaaaaaaaaa',
+      'feat(release): publish the image when a tag is pushed',
+      // Git folds a trailer's continuation lines but keeps the newline and the
+      // leading space it was indented with.
+      'Official container images, published per release to\n ghcr.io/example/app for amd64 and arm64.',
+      '',
+    ].join(FIELD) + RECORD;
+
+  const [commit] = parseLog(raw);
+  assert.equal(commit.type, 'feat');
+  assert.equal(commit.scope, 'release');
+  assert.ok(!commit.changelog.includes('\n'), 'folded onto one line');
+  assert.ok(!/\s{2}/.test(commit.changelog), 'no doubled spaces from the fold');
+  assert.equal(
+    commit.changelog,
+    'Official container images, published per release to ghcr.io/example/app for amd64 and arm64.'
   );
-  assert.ok(wrapped, 'the trailer commit is in history');
-  assert.ok(!wrapped.changelog.includes('\n'), 'folded onto one line');
-  assert.ok(!/\s{2}/.test(wrapped.changelog), 'no doubled spaces from the fold');
-  assert.match(wrapped.changelog, /published per release to ghcr\.io/);
 });

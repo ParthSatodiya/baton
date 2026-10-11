@@ -28,18 +28,15 @@ const SECTIONS = [
   ['revert', 'Reverted'],
 ];
 
-const RECORD = '\x1e';
-const FIELD = '\x1f';
+export const RECORD = '\x1e';
+export const FIELD = '\x1f';
 
-/** One object a commit, with the trailers git parsed for us. */
-export function readCommits(range) {
-  const fmt = [
-    '%H',
-    '%s',
-    '%(trailers:key=Changelog,valueonly,separator=%x20)',
-    '%(trailers:key=BREAKING-CHANGE,valueonly,separator=%x20)',
-  ].join(FIELD);
-  const out = git('log', ...(range ? [range] : []), `--format=${fmt}${RECORD}`);
+/**
+ * Turn `git log` output into one object a commit. Split from the git call so it
+ * is testable against a fixture — a test that reads this repo's real history
+ * passes locally and fails in CI, where the checkout is shallow.
+ */
+export function parseLog(out) {
   return out
     .split(RECORD)
     .map((r) => r.trim())
@@ -61,6 +58,17 @@ export function readCommits(range) {
         changelog: (changelog ?? '').replace(/\s+/g, ' ').trim(),
       };
     });
+}
+
+/** The commits in a range, newest first. */
+export function readCommits(range) {
+  const fmt = [
+    '%H',
+    '%s',
+    '%(trailers:key=Changelog,valueonly,separator=%x20)',
+    '%(trailers:key=BREAKING-CHANGE,valueonly,separator=%x20)',
+  ].join(FIELD);
+  return parseLog(git('log', ...(range ? [range] : []), `--format=${fmt}${RECORD}`));
 }
 
 /**
