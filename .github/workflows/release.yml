@@ -1,5 +1,10 @@
 name: Release
 
+# Actions are pinned to a full version tag, which GitHub makes immutable, so
+# the ref cannot be repointed later. actions/checkout is the exception: none of
+# its releases are immutable, so it is pinned to a commit SHA instead. Dependabot
+# updates both forms.
+
 # Driven by the tag, which is what `npm run release` tells you to push.
 on:
   push:
@@ -16,8 +21,8 @@ jobs:
     env:
       DATABASE_URL: file:./ci.db
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version: 26
           cache: npm
@@ -34,7 +39,7 @@ jobs:
       contents: write # create the Release
       packages: write # push to GHCR
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Read the version out of the tag
         id: v
@@ -44,16 +49,16 @@ jobs:
       # arm64 leg downloads binaries rather than compiling under emulation.
       # If this ever gets slow, the upgrade is a matrix over ubuntu-latest and
       # ubuntu-24.04-arm, building per-arch and merging the manifests.
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - uses: docker/setup-qemu-action@v4.4.0
+      - uses: docker/setup-buildx-action@v4.4.1
+      - uses: docker/login-action@v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6.2.0
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
@@ -63,7 +68,7 @@ jobs:
 
       # The build fetches Google Fonts (next/font/google). A red build here is
       # usually that, not the code — re-run it.
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7.4.0
         with:
           context: .
           platforms: linux/amd64,linux/arm64

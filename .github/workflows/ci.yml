@@ -1,5 +1,10 @@
 name: CI
 
+# Actions are pinned to a full version tag, which GitHub makes immutable, so
+# the ref cannot be repointed later. actions/checkout is the exception: none of
+# its releases are immutable, so it is pinned to a commit SHA instead. Dependabot
+# updates both forms.
+
 on:
   push:
     branches: [main]
@@ -14,8 +19,8 @@ jobs:
     env:
       DATABASE_URL: file:./ci.db
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version: 26
           cache: npm
