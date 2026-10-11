@@ -778,3 +778,91 @@ test('no client component decides what day it is', () => {
     `these run on the viewer's clock, not the team's: ${offenders.join(', ')}`
   );
 });
+
+test('a release names itself from the commits, and 0.x never trips into 1.0.0', async () => {
+  const { nextVersion } = await import('../../scripts/release.mjs');
+  const c = (type: string, breaking = false) => ({ type, breaking });
+
+  assert.equal(nextVersion('0.1.0', [c('fix')]).version, '0.1.1', 'fixes alone are a patch');
+  assert.equal(nextVersion('0.1.0', [c('fix'), c('feat')]).version, '0.2.0', 'any feat is a minor');
+  assert.equal(nextVersion('0.1.0', [c('chore')]).version, '0.1.1');
+
+  // The one worth pinning: while the major is 0 the API is unstable by
+  // definition, so a breaking change must not declare 1.0.0 by accident.
+  const zero = nextVersion('0.4.2', [c('feat', true)]);
+  assert.equal(zero.version, '0.5.0');
+  assert.equal(zero.bump, 'minor');
+  assert.match(zero.note, /0\.x/);
+
+  // Past 1.0 it behaves normally.
+  assert.equal(nextVersion('1.4.2', [c('feat', true)]).version, '2.0.0');
+
+  // Asking for it explicitly always wins — that is how 1.0.0 happens.
+  assert.equal(nextVersion('0.9.0', [c('fix')], 'major').version, '1.0.0');
+});
+
+test('the changelog prefers the trailer, drops the skipped, and leads with breaking', async () => {
+  const { renderEntry } = await import('../../scripts/release.mjs');
+  const commits = [
+    {
+      hash: 'aaaaaaa',
+      type: 'feat',
+      description: 'GitHub sign-in, verified addresses only',
+      changelog: 'Sign in with GitHub.',
+      breaking: false,
+      breakingNote: '',
+    },
+    {
+      hash: 'bbbbbbb',
+      type: 'fix',
+      description: 'keep instrumentation.ts edge-safe',
+      changelog: 'skip',
+      breaking: false,
+      breakingNote: '',
+    },
+    {
+      hash: 'ccccccc',
+      type: 'feat',
+      description: 'run as the node user',
+      changelog: '',
+      breaking: true,
+      breakingNote: 'Volumes are root-owned; chown once.',
+    },
+    { hash: 'ddddddd', type: 'chore', description: 'bump deps', changelog: '', breaking: false, breakingNote: '' },
+  ];
+  const out = renderEntry('1.2.0', commits, '2026-10-11');
+
+  assert.match(out, /^## 1\.2\.0 — 2026-10-11/);
+  assert.match(out, /Sign in with GitHub\./, 'the trailer wins over the subject');
+  assert.ok(!out.includes('GitHub sign-in, verified'), 'the subject is not also printed');
+  assert.ok(!out.includes('instrumentation'), 'Changelog: skip means skip');
+  assert.ok(!out.includes('bump deps'), 'chore is not a user-facing change');
+  assert.ok(
+    out.indexOf('### Breaking') < out.indexOf('### Added'),
+    'breaking changes come first — they are what stops an upgrade'
+  );
+  assert.match(out, /Volumes are root-owned/);
+
+  // Nothing but noise still has to produce a readable entry.
+  assert.match(renderEntry('1.2.1', [commits[3]], '2026-10-11'), /Internal changes only/);
+});
+
+test('a new changelog entry goes on top and keeps what was already there', async () => {
+  const { prependEntry } = await import('../../scripts/release.mjs');
+  const entry = '## 0.2.0 — 2026-10-11\n\n### Added\n- the second thing (bbbbbbb)\n';
+
+  // First release: no file yet.
+  const fresh = prependEntry('', entry);
+  assert.match(fresh, /^# Changelog\n\n## 0\.2\.0/);
+
+  // Second release: the old entry survives, and there is still ONE heading.
+  const existing = '# Changelog\n\n## 0.1.0 — 2026-01-01\n\n### Added\n- the first thing (aaaaaaa)\n';
+  const next = prependEntry(existing, entry);
+  assert.equal(next.match(/^# Changelog$/gm)?.length, 1, 'the heading is not duplicated');
+  assert.ok(
+    next.indexOf('## 0.2.0') < next.indexOf('## 0.1.0'),
+    'newest release first — nobody scrolls to the bottom for what just shipped'
+  );
+  assert.match(next, /the first thing \(aaaaaaa\)/, 'history is never dropped');
+  assert.ok(next.endsWith('\n') && !next.endsWith('\n\n'), 'exactly one trailing newline');
+});
