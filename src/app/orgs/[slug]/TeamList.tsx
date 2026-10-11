@@ -199,7 +199,7 @@ export default function TeamList({
                         Standup held
                       </p>
                     </>
-                  ) : (
+                  ) : team.myRole === 'observer' ? null : (
                     <button
                       disabled={busy}
                       onClick={() =>
