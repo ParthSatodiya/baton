@@ -16,7 +16,7 @@ jobs:
     env:
       DATABASE_URL: file:./ci.db
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with:
           node-version: 26
@@ -34,7 +34,7 @@ jobs:
       contents: write # create the Release
       packages: write # push to GHCR
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Read the version out of the tag
         id: v
