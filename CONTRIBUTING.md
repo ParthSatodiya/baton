@@ -14,6 +14,11 @@ npx prisma migrate dev # after editing prisma/schema.prisma
 npm run backup         # VACUUM INTO a snapshot, into ./backups
 ```
 
+`npm test` covers the part worth covering: carry-forward across a skipped day,
+finished tasks not carrying, deactivated members not carrying, blocked staying
+blocked, and the days-dragging count staying anchored to the day a task first
+appeared. It runs against a throwaway SQLite file and touches nothing real.
+
 ## Rules that are easy to break
 
 These are load-bearing. A change that violates one will look fine and be wrong.

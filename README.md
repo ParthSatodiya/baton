@@ -25,7 +25,8 @@ tracker. **[What it is for, and the scenarios it was built around →](docs/use-
 ## See it in 30 seconds
 
 ```shell
-npm install
+git clone https://github.com/ParthSatodiya/relaystand.git
+cd relaystand && npm install
 npm run demo          # http://localhost:3000 → "Explore the demo team"
 ```
 
@@ -37,36 +38,74 @@ Demo mode is local only: it needs `DEMO_MODE=1`, and it refuses to switch on
 under `NODE_ENV=production`, so it cannot exist in the Docker image or any real
 build. `npm test` pins that.
 
-## Requirements
+## Run it for your team
 
-Node 26+, and a Google, Microsoft (Entra ID) or GitHub OAuth app for sign-in —
-except for `npm run demo`, which needs neither.
+One container, one SQLite file on a volume. **You do not need to clone
+anything.** Make a directory, put these two files in it, and start.
 
-## Local setup
+`compose.yaml`:
 
-```shell
-npm install
-cp .env.example .env      # then fill it in — see below
-npx prisma migrate dev
-npm run dev               # http://localhost:3000
+```yaml
+services:
+  relaystand:
+    image: ghcr.io/parthsatodiya/relaystand:0.2.0
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    environment:
+      # Always the volume path inside the container, whatever .env says.
+      DATABASE_URL: file:/data/relaystand.db
+      # Uploads share the volume, so an upgrade never loses a logo.
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - relaystand-data:/data
+
+volumes:
+  relaystand-data:
 ```
 
-### Filling in `.env`
+`.env`:
 
 ```shell
-npx auth secret           # writes AUTH_SECRET
+AUTH_SECRET="<paste the output of: openssl rand -base64 32>"
+AUTH_URL="https://standup.example.com"   # the URL people actually browse to
+TZ="Europe/London"                       # your team's timezone, not the server's
+
+# At least one sign-in provider — see below
+AUTH_GOOGLE_ID=""
+AUTH_GOOGLE_SECRET=""
+
+# Who may sign in. Read "Decide who can sign in" before leaving these empty.
+AUTH_ALLOWED_DOMAINS="acme.com"
+AUTH_ALLOWED_EMAILS=""
 ```
 
-Then add at least one provider. You only need one; both work side by side.
+```shell
+docker compose up -d
+docker compose ps        # wait for "healthy"
+```
+
+Migrations run by themselves on start. The image is pinned to a version on
+purpose — upgrading should be something you choose, not something that happens
+while you sleep.
+
+### Sign-in credentials
+
+You need one provider. Any of the three works, and they work side by side.
+Everywhere below, replace `https://standup.example.com` with your `AUTH_URL`
+(use `http://localhost:3000` when developing).
 
 **Google** — Cloud Console → APIs & Services → Credentials → OAuth client ID
 (Web application). Authorised redirect URI:
-`http://localhost:3000/api/auth/callback/google`. Copy the client ID and secret
-into `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET`.
+`https://standup.example.com/api/auth/callback/google`. Copy the client ID and
+secret into `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET`.
 
 **GitHub** — Settings → Developer settings → OAuth Apps → New OAuth App.
-Authorization callback URL: `http://localhost:3000/api/auth/callback/github`.
-Copy the values into `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET`.
+Authorization callback URL:
+`https://standup.example.com/api/auth/callback/github`. Copy the values into
+`AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET`.
 
 Two things worth knowing. RelayStand only accepts a GitHub address that GitHub
 itself has **verified** — the stock integration does not check that, and here
@@ -77,34 +116,10 @@ GitHub account.
 
 **Microsoft / Outlook** — Azure Portal → Entra ID → App registrations → New
 registration. Redirect URI:
-`http://localhost:3000/api/auth/callback/microsoft-entra-id`. Copy the values
-into `AUTH_MICROSOFT_ENTRA_ID_ID`, `AUTH_MICROSOFT_ENTRA_ID_SECRET`, and set
-`AUTH_MICROSOFT_ENTRA_ID_ISSUER` to
+`https://standup.example.com/api/auth/callback/microsoft-entra-id`. Copy the
+values into `AUTH_MICROSOFT_ENTRA_ID_ID`, `AUTH_MICROSOFT_ENTRA_ID_SECRET`, and
+set `AUTH_MICROSOFT_ENTRA_ID_ISSUER` to
 `https://login.microsoftonline.com/<tenant-id>/v2.0`.
-
-## First run
-
-1. Sign in. You become a user.
-2. Create a team — you are its lead.
-3. **Members** → add each developer by name and **work email**. That email is
-   how they are matched when they sign in; until then you enter their tasks for
-   them.
-4. Back on the board, press **+ Start** in today's column (**Start standup** on
-   a phone).
-
-## Deploying
-
-One container, one SQLite file on a volume.
-
-```shell
-cp .env.example .env      # set AUTH_URL to the real hostname
-docker compose up -d --build
-```
-
-`AUTH_URL` must match the host people browse to, and that host's callback URL
-must be registered with Google/Microsoft. Migrations run automatically on
-container start. `DATABASE_URL` is forced to the volume path — leave it alone in
-compose.
 
 ### Decide who can sign in
 
@@ -127,8 +142,64 @@ account gets told to ask you, not a blank error.
 [SECURITY.md](SECURITY.md) has the rest: what the app stores, TLS, backups, and
 the limits we already know about.
 
-To put it behind Nginx, proxy to port 3000 and pass through `Host`,
-`X-Forwarded-Proto`, and `X-Forwarded-Host`.
+### HTTPS, if you do not already have a proxy
+
+The app speaks plain HTTP and expects something in front of it. If you already
+run Nginx or Traefik, proxy to port 3000 and pass through `Host`,
+`X-Forwarded-Proto` and `X-Forwarded-Host`.
+
+If you have nothing, add Caddy — it gets and renews a certificate by itself.
+Point an A record at the server, open ports 80 and 443, then:
+
+`Caddyfile`:
+
+```
+standup.example.com {
+	reverse_proxy relaystand:3000
+}
+```
+
+and in `compose.yaml`, **delete the `ports:` block from `relaystand`** so only
+Caddy can reach it, and add:
+
+```yaml
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Keep this: it holds the certificates. Losing it means asking
+      # Let's Encrypt for new ones, and they rate-limit that.
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  caddy-data:
+  caddy-config:
+```
+
+Set `AUTH_URL="https://standup.example.com"` to match, and register that
+hostname's callback URL with your provider. Caddy sets the forwarded headers
+itself, so there is nothing else to configure.
+
+### Upgrading
+
+```shell
+docker compose exec relaystand node scripts/backup.mjs /data/backups  # first
+```
+
+Then raise the version in `compose.yaml` and:
+
+```shell
+docker compose pull && docker compose up -d
+```
+
+Migrations run on start. Releases are listed at
+[github.com/ParthSatodiya/relaystand/releases](https://github.com/ParthSatodiya/relaystand/releases)
+— read the notes before jumping versions.
 
 ### Which day is "today"
 
@@ -143,29 +214,39 @@ zone. The same instant — 19:30 UTC — is the 8th in London and already the 9t
 Kolkata, so without this an Auckland team's 9am standup files under *yesterday*,
 permanently, not just near midnight.
 
-It needs no extra packages: Node resolves zones through its own bundled ICU, so
-it works in the Alpine image as shipped. Timestamps (`createdAt`) are UTC either
-way and are unaffected — `TZ` only decides which day new standups are filed
-under, and where the board's day boundary falls.
+Timestamps (`createdAt`) are UTC either way and are unaffected — `TZ` only
+decides which day new standups are filed under, and where the board's day
+boundary falls. The server owns this decision alone: the board is told what
+today is rather than working it out in the browser, so a developer visiting from
+another timezone sees the team's day, not their own.
 
-The server owns this decision alone. The board is told what today is rather than
-working it out in the browser, so a developer visiting from another timezone
-sees the team's day, not their own, and the Today button can never disagree with
-the day the API writes.
+### What the container does on its own
 
-At boot the server checks its own configuration and says what is missing, by
-name. A production start with no `AUTH_SECRET` refuses outright rather than
-failing later on somebody's sign-in; everything else is a warning it prints once
-(`src/lib/env.ts`).
+At boot it checks its configuration and says what is missing, by name. A
+production start with no `AUTH_SECRET` refuses outright rather than failing
+later on somebody's sign-in; everything else is a warning printed once.
 
-The container runs as the unprivileged `node` user and reports its own health on
-`/api/health`, which reads a table rather than just answering — a container whose
-volume went missing shows as unhealthy instead of quietly serving an empty app.
+It runs as the unprivileged `node` user and reports its own health on
+`/api/health`, which reads a table rather than merely answering — a container
+whose volume went missing shows as unhealthy instead of quietly serving an empty
+app.
 
-> **Upgrading from a build before this?** The `relaystand-data` volume was
-> created root-owned, so the new non-root container cannot write to it. Fix it
-> once:
+> **Upgrading from a build older than v0.2.0?** The `relaystand-data` volume was
+> created root-owned, so the non-root container cannot write to it. Fix it once:
 > `docker compose run --rm --user root relaystand chown -R node:node /data`
+
+## First run
+
+
+1. Sign in. You become a user.
+2. Create a team — you are its lead.
+3. **Members** → add each developer by name and **work email**. That email is
+   how they are matched when they sign in; until then you enter their tasks for
+   them.
+4. Back on the board, press **+ Start** in today's column (**Start standup** on
+   a phone).
+
+## Operating it
 
 ### Backups, and getting your data out
 
@@ -213,15 +294,18 @@ rows, so `createdBy` points at ids that are not in the file. Restore from the
 would write `OrgMember` rows, which is precisely what `AUTH_ALLOWED_DOMAINS`
 exists to control.
 
-## Tests
+## Developing
 
 ```shell
-npm test
+git clone https://github.com/ParthSatodiya/relaystand.git
+cd relaystand && npm install
+cp .env.example .env      # then fill it in — see "Sign-in credentials" above
+npx prisma migrate dev
+npm run dev               # http://localhost:3000
 ```
 
-Covers the part worth covering: carry-forward across a skipped day, finished
-tasks not carrying, deactivated members not carrying, blocked staying blocked,
-and the days-dragging count staying anchored to the day a task first appeared.
+[CONTRIBUTING.md](CONTRIBUTING.md) has the rest — the commands, what `npm test`
+covers, the rules that are easy to break, and how a release is cut.
 
 ## Contributing
 

@@ -1,5 +1,8 @@
 services:
   relaystand:
+    # Pulled by default. `docker compose up -d --build` builds from this
+    # checkout instead, which is what you want when working on the code.
+    image: ghcr.io/parthsatodiya/relaystand:0.2.0
     build: .
     container_name: relaystand
     restart: unless-stopped

@@ -19,8 +19,12 @@ bounty — this is a side project.
 
 ## What is supported
 
-The latest commit on `main`. There are no maintained release branches yet, so
-"upgrade" means pull and rebuild.
+The latest release, and `main`. There are no maintained release branches, so a
+fix lands in the next release rather than being backported — "upgrade" means
+moving to the newest tag.
+
+Published images are at `ghcr.io/parthsatodiya/relaystand`, one tag per
+release. Pin a version rather than `latest` so an upgrade is deliberate.
 
 ## What RelayStand actually holds
 
