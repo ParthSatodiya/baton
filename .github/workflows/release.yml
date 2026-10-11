@@ -1,9 +1,9 @@
 name: Release
 
 # Actions are pinned to a full version tag, which GitHub makes immutable, so
-# the ref cannot be repointed later. actions/checkout is the exception: none of
-# its releases are immutable, so it is pinned to a commit SHA instead. Dependabot
-# updates both forms.
+# the ref cannot be repointed later. The ones pinned to a commit SHA instead
+# (checkout, upload/download-artifact) publish non-immutable releases, so a tag
+# there could be moved. Dependabot updates both forms.
 
 # Driven by the tag, which is what `npm run release` tells you to push.
 on:
@@ -32,12 +32,69 @@ jobs:
       - run: npm test
       - run: npm run build
 
-  publish:
+  # One native runner per architecture, NOT one job cross-building both.
+  # Prisma's schema parser breaks under QEMU — `getDmmf` returns truncated
+  # JSON and `prisma generate` dies — so arm64 has to be built on arm64.
+  # Each leg pushes by digest; `publish` stitches them into one manifest.
+  build:
     needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            platform: linux/amd64
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm64
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: docker/setup-buildx-action@v4.4.1
+      - uses: docker/login-action@v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # GHCR paths are lowercase; the owner here is not. `tr` rather than
+      # ${VAR,,}, which needs bash 4 and silently is not portable.
+      - id: img
+        run: echo "name=ghcr.io/$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      # The build fetches Google Fonts (next/font/google). A red build here is
+      # usually that, not the code — re-run it.
+      - id: build
+        uses: docker/build-push-action@v7.4.0
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=${{ steps.img.outputs.name }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+
+      - name: Keep the digest for the manifest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p /tmp/digests
+          touch "/tmp/digests/${DIGEST#sha256:}"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: digest-${{ matrix.runner }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write # create the Release
-      packages: write # push to GHCR
+      packages: write # tag the manifest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -45,11 +102,15 @@ jobs:
         id: v
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      # better-sqlite3 and sharp both ship linuxmusl-arm64 prebuilds, so the
-      # arm64 leg downloads binaries rather than compiling under emulation.
-      # If this ever gets slow, the upgrade is a matrix over ubuntu-latest and
-      # ubuntu-24.04-arm, building per-arch and merging the manifests.
-      - uses: docker/setup-qemu-action@v4.4.0
+      - id: img
+        run: echo "name=ghcr.io/$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: /tmp/digests
+          pattern: digest-*
+          merge-multiple: true
+
       - uses: docker/setup-buildx-action@v4.4.1
       - uses: docker/login-action@v4.6.0
         with:
@@ -60,23 +121,22 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v6.2.0
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ${{ steps.img.outputs.name }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
 
-      # The build fetches Google Fonts (next/font/google). A red build here is
-      # usually that, not the code — re-run it.
-      - uses: docker/build-push-action@v7.4.0
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # One manifest list per tag, pointing at both per-arch digests.
+      - name: Stitch the architectures into one image
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ steps.img.outputs.name }}@sha256:%s ' *)
+
+      - name: Show what was published
+        run: docker buildx imagetools inspect ${{ steps.img.outputs.name }}:${{ steps.v.outputs.version }}
 
       # CHANGELOG.md is the single source of the notes. The script exits 1 if
       # this version has no section, so an empty release is never published.
@@ -85,10 +145,9 @@ jobs:
 
       - name: Add the pull command
         run: |
-          repo="${GITHUB_REPOSITORY,,}"   # GHCR paths are lowercase
           {
             printf '\n## Install\n\n```shell\n'
-            printf 'docker pull ghcr.io/%s:%s\n' "$repo" "${{ steps.v.outputs.version }}"
+            printf 'docker pull %s:%s\n' "${{ steps.img.outputs.name }}" "${{ steps.v.outputs.version }}"
             printf '```\n'
           } >> notes.md
 
