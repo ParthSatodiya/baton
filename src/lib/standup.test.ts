@@ -866,3 +866,53 @@ test('a new changelog entry goes on top and keeps what was already there', async
   assert.match(next, /the first thing \(aaaaaaa\)/, 'history is never dropped');
   assert.ok(next.endsWith('\n') && !next.endsWith('\n\n'), 'exactly one trailing newline');
 });
+
+test('release notes come out of CHANGELOG.md, one version at a time', async () => {
+  const { sectionFor } = await import('../../scripts/release.mjs');
+  const file = [
+    '# Changelog',
+    '',
+    '## 0.2.0 — 2026-10-11',
+    '',
+    '### Added',
+    '- the second thing (bbbbbbb)',
+    '',
+    '## 0.1.10 — 2026-02-02',
+    '',
+    '### Added',
+    '- a decoy whose version is a prefix match for 0.1.1',
+    '',
+    '## 0.1.1 — 2026-01-01',
+    '',
+    '### Fixed',
+    '- the first thing (aaaaaaa)',
+    '',
+  ].join('\n');
+
+  const latest = sectionFor(file, '0.2.0');
+  assert.match(latest, /the second thing/);
+  // Not `includes('## ')` — "### Added" contains that as a substring.
+  assert.ok(!/^## /m.test(latest), 'the version heading is dropped — the tag is the title');
+  assert.match(latest, /^### Added/m, 'but the sub-headings inside it stay');
+  assert.ok(!latest.includes('decoy'), 'it stops at the next version');
+
+  // 0.1.1 must not match the 0.1.10 heading that appears first.
+  const older = sectionFor(file, '0.1.1');
+  assert.match(older, /the first thing/);
+  assert.ok(!older.includes('decoy'), '0.1.1 is not a prefix of 0.1.10 here');
+
+  assert.equal(sectionFor(file, '9.9.9'), '', 'a missing version is empty, not wrong');
+});
+
+test('a wrapped trailer becomes one changelog line', async () => {
+  const { readCommits } = await import('../../scripts/release.mjs');
+  // Reads this repo's own history: the commit that added the release workflow
+  // carries a Changelog trailer written across two lines.
+  const wrapped = readCommits('').find((c: { changelog: string }) =>
+    c.changelog.startsWith('Official container images')
+  );
+  assert.ok(wrapped, 'the trailer commit is in history');
+  assert.ok(!wrapped.changelog.includes('\n'), 'folded onto one line');
+  assert.ok(!/\s{2}/.test(wrapped.changelog), 'no doubled spaces from the fold');
+  assert.match(wrapped.changelog, /published per release to ghcr\.io/);
+});

@@ -142,6 +142,31 @@ changed.
   own test runner against a throwaway SQLite file. No frameworks.
 - Say what you changed and why. A short PR body beats a long one.
 
+## Cutting a release
+
+```shell
+npm run release                 # dry run — what version, and what the entry says
+npm run release -- --write      # bumps package.json, prepends CHANGELOG.md
+```
+
+Then **edit `CHANGELOG.md`**. What the script produces is a draft assembled from
+commit subjects; the editing pass is what makes it worth reading. Drop anything
+a user would not recognise, and merge the lines that describe one change.
+
+```shell
+git commit -am "chore(release): 0.2.0"
+git tag -a v0.2.0 -m "v0.2.0"
+git push && git push --tags
+```
+
+Pushing the tag is the trigger. `.github/workflows/release.yml` re-runs lint,
+tests and the build, then builds the image for amd64 and arm64, pushes it to
+`ghcr.io/parthsatodiya/relaystand`, and opens a GitHub Release whose body is
+that version's section of `CHANGELOG.md` plus the pull command.
+
+Nothing is published before the checks pass, and a version with no section in
+`CHANGELOG.md` fails the job rather than publishing an empty release.
+
 ## Reporting a security issue
 
 Please do not open a public issue. See [SECURITY.md](SECURITY.md) — it has the

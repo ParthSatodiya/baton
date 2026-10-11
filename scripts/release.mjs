@@ -54,9 +54,11 @@ export function readCommits(range) {
         scope: m?.[2] ?? '',
         // Either marker counts: the ! in the subject or the footer.
         breaking: Boolean(m?.[3]) || Boolean(breaking?.trim()),
-        breakingNote: (breaking ?? '').trim(),
+        breakingNote: (breaking ?? '').replace(/\s+/g, ' ').trim(),
         description: m?.[4] ?? subject ?? '',
-        changelog: (changelog ?? '').trim(),
+        // Git folds a trailer's continuation lines but keeps the newline and
+        // its leading space. Collapse it: this becomes one bullet.
+        changelog: (changelog ?? '').replace(/\s+/g, ' ').trim(),
       };
     });
 }
@@ -123,8 +125,45 @@ export function prependEntry(existing, entry) {
   return `${header}\n${entry}\n${body}`.trimEnd() + '\n';
 }
 
+/**
+ * One version's section out of CHANGELOG.md, without its heading — the GitHub
+ * Release already shows the tag as the title. Keeps the file the single source
+ * of the notes, so there is nothing to keep in sync by hand.
+ */
+export function sectionFor(changelog, version) {
+  const lines = changelog.split('\n');
+  const start = lines.findIndex((l) => new RegExp(`^## ${version.replace(/\./g, '\\.')}(\\s|$)`).test(l));
+  if (start === -1) return '';
+  const rest = lines.slice(start + 1);
+  const end = rest.findIndex((l) => l.startsWith('## '));
+  return (end === -1 ? rest : rest.slice(0, end)).join('\n').trim();
+}
+
 function main() {
   const args = process.argv.slice(2);
+
+  // `--notes <version>` prints that version's section and stops. Used by the
+  // release workflow; deliberately ahead of every guard below, since it reads
+  // and changes nothing.
+  const notesAt = args.indexOf('--notes');
+  if (notesAt !== -1) {
+    const version = args[notesAt + 1];
+    if (!version) {
+      console.error('--notes needs a version, e.g. --notes 0.2.0');
+      process.exit(1);
+    }
+    const section = existsSync('CHANGELOG.md')
+      ? sectionFor(readFileSync('CHANGELOG.md', 'utf8'), version)
+      : '';
+    // Loudly, rather than publishing a release with an empty body.
+    if (!section) {
+      console.error(`No "## ${version}" section in CHANGELOG.md.`);
+      process.exit(1);
+    }
+    console.log(section);
+    return;
+  }
+
   const write = args.includes('--write');
   const forced = args.find((a) => ['major', 'minor', 'patch'].includes(a));
 
