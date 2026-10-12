@@ -2,8 +2,14 @@
 
 ## 0.2.1 — 2026-10-13
 
+### Added
+- The week grid now marks the days someone was on leave, so a long bar that ran
+  through a holiday says so.
+
 ### Fixed
 - The login page and the header now say Baton instead of RelayStand.
+- The date arrows on the board stay put, so a second click on the next-day arrow
+  can no longer land on Today.
 
 ## 0.2.0 — 2026-10-13
 
