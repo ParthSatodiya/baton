@@ -5,7 +5,7 @@ The tour. If you only want to install it, the [README](../README.md) is enough.
 ![The Payments team's week, Monday to Friday. Each bar is a task and its length
 is how many days that task has been running; the hatched red one is blocked and
 has run all five. Pressing the "blocked" chip dims everything
-else.](media/week-grid.gif)
+else.](media/week-grid.webp)
 
 ## The problem it solves
 
@@ -42,7 +42,7 @@ Monday on Thursday.
 
 ![Monday's column is empty and offers "+ Start". Pressing it fills the column
 with every unfinished task from Friday, each already counting its age — 7d on the
-blocked one, 4d and 5d on two others.](media/start-standup.gif)
+blocked one, 4d and 5d on two others.](media/start-standup.webp)
 
 **During the meeting.** Press **Run standup**. It gives you one person at a
 time, arrow keys to move between them, and a timer running in the corner so a
@@ -106,7 +106,7 @@ what was stuck.
 
 ![Reports over one week: finished count, average days to done and longest run
 per person, then every still-running task oldest first — the blocked four-day one
-at the top with its Jira number beside it.](media/reports.gif)
+at the top with its Jira number beside it.](media/reports.webp)
 
 ## Who can do what
 

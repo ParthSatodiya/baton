@@ -17,7 +17,7 @@ finished what.
 
 ![A team's week: one row per developer, one bar per task, bar length is days
 running. The hatched red bar is blocked and has run all
-week.](docs/media/week-grid.gif)
+week.](docs/media/week-grid.webp)
 
 Built for a team lead who already has Jira or Linear and does not want a second
 tracker. **[What it is for, and the scenarios it was built around →](docs/use-cases.md)**
