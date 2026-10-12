@@ -103,12 +103,13 @@ only takes a column if the team actually stood up on it.
   column, a quick add a person, and starting a day that was never held; title,
   comment, links, order, status and away all live in run mode, which a click on
   any person or bar opens.
-- **The date is the control.** The board's title *is* the stepper: arrows either
-  side, and pressing the date opens the day picker (`src/components/DayPicker.tsx`)
-  — our own, not the native one, because only ours can say which days the team
-  stood up on: a lime dot for held, coral when that day had something blocked, a
-  ring on today, future days disabled. `Today` is a small chip beside it, always
-  rendered and disabled on the day itself.
+- **The date is the control.** The board's title *is* the stepper: `Today` and
+  both arrows sit in front of it, and pressing the date opens the day picker
+  (`src/components/DayPicker.tsx`) — our own, not the native one, because only
+  ours can say which days the team stood up on: a lime dot for held, coral when
+  that day had something blocked, a ring on today, future days disabled. The
+  buttons come first because a day name runs from "Friday" to "Wednesday"; after
+  the title they moved with it, and a second click on › landed on `Today`.
 - **Run standup is the board's one baton control** — a primary button beside the
   day's figures, which starts at the top. In the grid, a person's mark turns into
   a ▶ on hover to start on them instead: what a lead reaches for when someone has

@@ -72,15 +72,34 @@ export default function Board({
       <TabMark alert={needsYou} />
 
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-        {/* One date, not two: the title steps, and pressing it opens the picker. */}
+        {/* One date, not two: the title steps, and pressing it opens the picker.
+            The buttons come first, so a long day name never moves them — a
+            second click on › must not land on Today. */}
         <div className="relative flex flex-wrap items-center gap-2.5">
-          <button
-            onClick={() => goto(shift(-1))}
-            aria-label="Previous working day"
-            className={`${ui.btn} ${ui.btnGhost} px-2`}
-          >
-            <ChevronLeft size={16} />
-          </button>
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => goto(today)}
+              disabled={date === today}
+              className="cursor-pointer rounded-full border border-line px-2.5 py-0.5 text-[11px] uppercase tracking-[0.11em] text-dim transition hover:border-baton hover:text-baton disabled:opacity-30 disabled:hover:border-line disabled:hover:text-dim"
+            >
+              Today
+            </button>
+            <button
+              onClick={() => goto(shift(-1))}
+              aria-label="Previous working day"
+              className={`${ui.btn} ${ui.btnGhost} px-2`}
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={() => goto(shift(1))}
+              disabled={date >= today}
+              aria-label="Next working day"
+              className={`${ui.btn} ${ui.btnGhost} px-2 disabled:opacity-30`}
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
           <button
             onClick={() => setPicking((open) => !open)}
             aria-expanded={picking}
@@ -90,21 +109,6 @@ export default function Board({
             }`}
           >
             {format(parseISO(date), 'EEEE d MMMM')}
-          </button>
-          <button
-            onClick={() => goto(shift(1))}
-            disabled={date >= today}
-            aria-label="Next working day"
-            className={`${ui.btn} ${ui.btnGhost} px-2 disabled:opacity-30`}
-          >
-            <ChevronRight size={16} />
-          </button>
-          <button
-            onClick={() => goto(today)}
-            disabled={date === today}
-            className="cursor-pointer rounded-full border border-line px-2.5 py-0.5 text-[11px] uppercase tracking-[0.11em] text-dim transition hover:border-baton hover:text-baton disabled:opacity-30 disabled:hover:border-line disabled:hover:text-dim"
-          >
-            Today
           </button>
 
           {picking && (
