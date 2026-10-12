@@ -96,6 +96,12 @@ only takes a column if the team actually stood up on it.
 - Columns carry three states: held (plain), **today** (`bg-baton/8`), and no
   standup held (`bg-chalk/4`, labelled under the date). Weekends are simply
   absent rather than greyed, so five columns always mean five days of work.
+- A day someone was **away** carries thin amber stripes (`.hatch-away`) in their
+  row, with an amber top edge and an "away" label, and their name says which
+  days ("· away Wed"). Bars run through it unchanged: leave does not pause a
+  task's days, but a long bar shows why it is long. Stripes, not a fill,
+  because amber washed over navy mixes to grey. Leave is stored per standup, so
+  a day with no standup cannot show it.
 - Carry-forward writes a new row a day, so bars are stitched back together by
   following `carriedFromId` inside the window. A task older than the window keeps
   a `warn` left edge instead of pretending it began at the first column.

@@ -46,6 +46,16 @@ body {
   );
 }
 
+/* An away day in a person's row. Thin stripes rather than a fill: amber
+   washed over navy mixes to grey, a stripe stays amber. */
+.hatch-away {
+  background: repeating-linear-gradient(
+    115deg,
+    rgba(245, 185, 63, 0.16) 0 2px,
+    transparent 2px 9px
+  );
+}
+
 /*
  * A row control that gets out of the way — but only where there is a pointer
  * that can bring it back. Width is not the question: a tablet is wide and has

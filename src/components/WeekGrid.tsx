@@ -139,6 +139,11 @@ export default function WeekGrid({
                     : member.role === 'observer'
                       ? 'Observer'
                       : 'Dev'}
+                  {member.absentOn.length > 0 && (
+                    <span className="text-warn">
+                      · away {member.absentOn.map((d) => format(parseISO(d), 'EEE')).join(', ')}
+                    </span>
+                  )}
                   {editable && standupId !== null && member.isActive && (
                     <button
                       onClick={() => {
@@ -166,18 +171,31 @@ export default function WeekGrid({
                 gridTemplateColumns: `repeat(${cols}, 1fr)`,
               }}
             >
-              {week.columns.map((col) => (
-                <div
-                  key={col.date}
-                  className={`border-l border-line-soft ${
-                    col.date === today ? 'bg-baton/6' : col.held ? '' : 'bg-chalk/3'
-                  }`}
-                />
-              ))}
+              {week.columns.map((col) =>
+                member.absentOn.includes(col.date) ? (
+                  // Away: bars run through unchanged — leave does not pause a
+                  // task's days — but a long bar now shows why it is long.
+                  <div
+                    key={col.date}
+                    className="hatch-away relative border-l border-line-soft shadow-[inset_0_2px_0_var(--color-warn)]"
+                  >
+                    <span className="absolute right-1.5 bottom-0.5 text-[10px] uppercase tracking-[0.12em] text-warn">
+                      away
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    key={col.date}
+                    className={`border-l border-line-soft ${
+                      col.date === today ? 'bg-baton/6' : col.held ? '' : 'bg-chalk/3'
+                    }`}
+                  />
+                ),
+              )}
             </div>
 
             <div
-              className="grid gap-1.5 py-2.5"
+              className={`grid gap-1.5 pt-2.5 ${member.absentOn.length > 0 ? 'pb-4' : 'pb-2.5'}`}
               style={{
                 gridColumn: '2 / -1',
                 gridRow: 1,
