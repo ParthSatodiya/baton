@@ -52,8 +52,9 @@ export default async function LoginPage({
       <div className="grid w-full items-center gap-10 md:grid-cols-[1.1fr_0.9fr] md:gap-14">
         <div>
           <h1 className="display text-5xl leading-[0.9] sm:text-6xl">
-            Relay
-            <span className="block text-baton">Stand</span>
+            Baton
+            {/* The baton itself: the same pill as a bar on the board. */}
+            <span aria-hidden="true" className="mt-3 block h-3 w-28 rounded-full bg-baton" />
           </h1>
           <p className="mt-5 max-w-[34ch] text-base leading-relaxed text-dim">
             The standup that remembers yesterday. Unfinished work carries itself to tomorrow&apos;s

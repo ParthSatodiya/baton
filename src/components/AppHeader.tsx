@@ -50,8 +50,9 @@ export default async function AppHeader({
         Skip to content
       </a>
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-        <Link href="/orgs" className="display shrink-0 text-lg">
-          Relay<span className="text-baton">Stand</span>
+        <Link href="/orgs" className="display flex shrink-0 items-center gap-1.5 text-lg">
+          Baton
+          <span aria-hidden="true" className="h-1.5 w-4 rounded-full bg-baton" />
         </Link>
 
         {org && (
