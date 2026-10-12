@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1 — 2026-10-13
+
+### Fixed
+- The login page and the header now say Baton instead of RelayStand.
+
 ## 0.2.0 — 2026-10-13
 
 First published release, and the first container image.
