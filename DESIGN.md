@@ -1,6 +1,6 @@
 # DESIGN.md — Track
 
-The visual system for RelayStand. One palette, two typefaces, one idea: **a bar's
+The visual system for Baton. One palette, two typefaces, one idea: **a bar's
 length is time, its fill is state.** Read this before adding a screen.
 
 Where it lives:

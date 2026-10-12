@@ -1,5 +1,5 @@
 {
-  "name": "relaystand",
+  "name": "baton",
   "version": "0.2.0",
   "private": true,
   "description": "The standup that remembers yesterday — a daily standup tracker that carries unfinished work forward.",
@@ -7,7 +7,7 @@
   "author": "Parth Satodiya",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ParthSatodiya/relaystand.git"
+    "url": "git+https://github.com/ParthSatodiya/baton.git"
   },
   "scripts": {
     "dev": "next dev",

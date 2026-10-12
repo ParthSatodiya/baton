@@ -39,7 +39,7 @@ export default function Onboarding({
     <div className="max-w-2xl space-y-7">
       <div>
         <h1 className={ui.h1}>
-          {firstTime ? 'Set up RelayStand' : 'Create or join an organisation'}
+          {firstTime ? 'Set up Baton' : 'Create or join an organisation'}
         </h1>
         <p className="mt-2 max-w-[56ch] text-sm text-dim">
           An organisation holds your teams, their standups and everyone who can see them.

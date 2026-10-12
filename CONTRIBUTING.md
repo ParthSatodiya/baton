@@ -1,4 +1,4 @@
-# Contributing to RelayStand
+# Contributing to Baton
 
 Thanks for taking a look. Setup, deployment and the first-run walkthrough all
 live in [README.md](README.md) — start there, then come back for the parts a
@@ -104,7 +104,7 @@ the time — say so in a `Changelog:` trailer:
 feat(auth): GitHub sign-in, verified addresses only
 
 Changelog: Sign in with GitHub. Only addresses GitHub has verified are
- accepted, because in RelayStand your email is your identity.
+ accepted, because in Baton your email is your identity.
 ```
 
 Continuation lines are indented by one space, the way git expects them.
@@ -127,7 +127,7 @@ Mark them. A `!` before the colon, and a footer saying what someone has to do:
 ```
 feat(docker)!: run as the node user
 
-BREAKING-CHANGE: existing relaystand-data volumes are root-owned, so the
+BREAKING-CHANGE: existing baton-data volumes are root-owned, so the
  container cannot write to them until a one-time chown. Command in README.
 ```
 
@@ -166,7 +166,7 @@ git push && git push --tags
 
 Pushing the tag is the trigger. `.github/workflows/release.yml` re-runs lint,
 tests and the build, then builds the image for amd64 and arm64, pushes it to
-`ghcr.io/parthsatodiya/relaystand`, and opens a GitHub Release whose body is
+`ghcr.io/parthsatodiya/baton`, and opens a GitHub Release whose body is
 that version's section of `CHANGELOG.md` plus the pull command.
 
 Nothing is published before the checks pass, and a version with no section in

@@ -12,7 +12,7 @@ const barlow = Barlow({
 const anton = Anton({ subsets: ['latin'], weight: '400', variable: '--font-anton' });
 
 export const metadata: Metadata = {
-  title: 'RelayStand',
+  title: 'Baton',
   description: 'The standup that remembers yesterday.',
 };
 

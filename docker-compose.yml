@@ -1,10 +1,10 @@
 services:
-  relaystand:
+  baton:
     # Pulled by default. `docker compose up -d --build` builds from this
     # checkout instead, which is what you want when working on the code.
-    image: ghcr.io/parthsatodiya/relaystand:0.2.0
+    image: ghcr.io/parthsatodiya/baton:0.2.0
     build: .
-    container_name: relaystand
+    container_name: baton
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -12,11 +12,11 @@ services:
       - .env
     environment:
       # Always the volume path inside the container, whatever .env says.
-      DATABASE_URL: file:/data/relaystand.db
+      DATABASE_URL: file:/data/baton.db
       # Uploads share the volume, so a rebuild never loses a logo.
       UPLOAD_DIR: /data/uploads
     volumes:
-      - relaystand-data:/data
+      - baton-data:/data
 
 volumes:
-  relaystand-data:
+  baton-data:

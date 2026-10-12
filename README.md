@@ -1,4 +1,4 @@
-# RelayStand
+# Baton
 
 *The standup that remembers yesterday.*
 
@@ -25,8 +25,8 @@ tracker. **[What it is for, and the scenarios it was built around →](docs/use-
 ## See it in 30 seconds
 
 ```shell
-git clone https://github.com/ParthSatodiya/relaystand.git
-cd relaystand && npm install
+git clone https://github.com/ParthSatodiya/baton.git
+cd baton && npm install
 npm run demo          # http://localhost:3000 → "Explore the demo team"
 ```
 
@@ -47,8 +47,8 @@ anything.** Make a directory, put these two files in it, and start.
 
 ```yaml
 services:
-  relaystand:
-    image: ghcr.io/parthsatodiya/relaystand:0.2.0
+  baton:
+    image: ghcr.io/parthsatodiya/baton:0.2.0
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -56,14 +56,14 @@ services:
       - .env
     environment:
       # Always the volume path inside the container, whatever .env says.
-      DATABASE_URL: file:/data/relaystand.db
+      DATABASE_URL: file:/data/baton.db
       # Uploads share the volume, so an upgrade never loses a logo.
       UPLOAD_DIR: /data/uploads
     volumes:
-      - relaystand-data:/data
+      - baton-data:/data
 
 volumes:
-  relaystand-data:
+  baton-data:
 ```
 
 `.env`:
@@ -107,7 +107,7 @@ Authorization callback URL:
 `https://standup.example.com/api/auth/callback/github`. Copy the values into
 `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET`.
 
-Two things worth knowing. RelayStand only accepts a GitHub address that GitHub
+Two things worth knowing. Baton only accepts a GitHub address that GitHub
 itself has **verified** — the stock integration does not check that, and here
 the email is the identity. And GitHub accounts usually carry a personal
 address, so `AUTH_ALLOWED_DOMAINS` will not match: name people with
@@ -155,11 +155,11 @@ Point an A record at the server, open ports 80 and 443, then:
 
 ```
 standup.example.com {
-	reverse_proxy relaystand:3000
+	reverse_proxy baton:3000
 }
 ```
 
-and in `compose.yaml`, **delete the `ports:` block from `relaystand`** so only
+and in `compose.yaml`, **delete the `ports:` block from `baton`** so only
 Caddy can reach it, and add:
 
 ```yaml
@@ -188,7 +188,7 @@ itself, so there is nothing else to configure.
 ### Upgrading
 
 ```shell
-docker compose exec relaystand node scripts/backup.mjs /data/backups  # first
+docker compose exec baton node scripts/backup.mjs /data/backups  # first
 ```
 
 Then raise the version in `compose.yaml` and:
@@ -198,7 +198,7 @@ docker compose pull && docker compose up -d
 ```
 
 Migrations run on start. Releases are listed at
-[github.com/ParthSatodiya/relaystand/releases](https://github.com/ParthSatodiya/relaystand/releases)
+[github.com/ParthSatodiya/baton/releases](https://github.com/ParthSatodiya/baton/releases)
 — read the notes before jumping versions.
 
 ### Which day is "today"
@@ -231,9 +231,9 @@ It runs as the unprivileged `node` user and reports its own health on
 whose volume went missing shows as unhealthy instead of quietly serving an empty
 app.
 
-> **Upgrading from a build older than v0.2.0?** The `relaystand-data` volume was
+> **Upgrading from a build older than v0.2.0?** The `baton-data` volume was
 > created root-owned, so the non-root container cannot write to it. Fix it once:
-> `docker compose run --rm --user root relaystand chown -R node:node /data`
+> `docker compose run --rm --user root baton chown -R node:node /data`
 
 ## First run
 
@@ -254,7 +254,7 @@ Two ways out, neither of them a support ticket.
 
 ```shell
 npm run backup                                                # writes ./backups
-docker compose exec relaystand node scripts/backup.mjs /data/backups   # deployed
+docker compose exec baton node scripts/backup.mjs /data/backups   # deployed
 ```
 
 That is SQLite's `VACUUM INTO`: a consistent snapshot taken while the app keeps
@@ -270,11 +270,11 @@ and leaving a stale pair next to a restored file does not merely confuse it:
 the next open fails with `database disk image is malformed`.
 
 ```shell
-docker compose stop relaystand
-docker compose run --rm relaystand sh -c \
-  'cp /data/backups/relaystand-<stamp>.db /data/relaystand.db &&
-   rm -f /data/relaystand.db-wal /data/relaystand.db-shm'
-docker compose start relaystand
+docker compose stop baton
+docker compose run --rm baton sh -c \
+  'cp /data/backups/baton-<stamp>.db /data/baton.db &&
+   rm -f /data/baton.db-wal /data/baton.db-shm'
+docker compose start baton
 ```
 
 Then watch `docker compose ps` go `healthy`. Practise this once on a scratch
@@ -297,8 +297,8 @@ exists to control.
 ## Developing
 
 ```shell
-git clone https://github.com/ParthSatodiya/relaystand.git
-cd relaystand && npm install
+git clone https://github.com/ParthSatodiya/baton.git
+cd baton && npm install
 cp .env.example .env      # then fill it in — see "Sign-in credentials" above
 npx prisma migrate dev
 npm run dev               # http://localhost:3000

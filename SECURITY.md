@@ -4,7 +4,7 @@
 
 Please do not open a public issue.
 
-Use GitHub's [private vulnerability reporting](https://github.com/ParthSatodiya/relaystand/security/advisories/new)
+Use GitHub's [private vulnerability reporting](https://github.com/ParthSatodiya/baton/security/advisories/new)
 on this repository. It reaches the maintainer directly and keeps the report
 private until there is something to upgrade to.
 
@@ -23,10 +23,10 @@ The latest release, and `main`. There are no maintained release branches, so a
 fix lands in the next release rather than being backported — "upgrade" means
 moving to the newest tag.
 
-Published images are at `ghcr.io/parthsatodiya/relaystand`, one tag per
+Published images are at `ghcr.io/parthsatodiya/baton`, one tag per
 release. Pin a version rather than `latest` so an upgrade is deliberate.
 
-## What RelayStand actually holds
+## What Baton actually holds
 
 Worth knowing before you assess it. A deployment stores work email addresses and
 display names, task titles and comments, links pasted onto tasks, who finished
@@ -60,7 +60,7 @@ no equivalent — every GitHub account is "any account" — so an instance offer
 GitHub sign-in leans entirely on the list above, and on `AUTH_ALLOWED_EMAILS`
 rather than domains, because GitHub accounts usually carry a personal address.
 
-RelayStand only accepts a GitHub address GitHub has **verified**. Auth.js's own
+Baton only accepts a GitHub address GitHub has **verified**. Auth.js's own
 GitHub provider takes the primary address without checking `verified` and falls
 back to the first one it finds; since identity here is the email, that would let
 an unverified address claim an existing member's row. `src/auth.ts` overrides
@@ -76,11 +76,11 @@ actually browse to, or the OAuth callback and the session cookie will disagree.
 Pass through `Host`, `X-Forwarded-Proto` and `X-Forwarded-Host`.
 
 **Back up the volume.** Everything lives in one SQLite file on the
-`relaystand-data` volume. Losing it loses the history, and a ransomware-shaped
+`baton-data` volume. Losing it loses the history, and a ransomware-shaped
 bad day is a security problem too.
 
 ```shell
-docker compose exec relaystand node scripts/backup.mjs /data/backups
+docker compose exec baton node scripts/backup.mjs /data/backups
 ```
 
 That is SQLite's own `VACUUM INTO` — a consistent copy taken while the app keeps

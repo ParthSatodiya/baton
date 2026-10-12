@@ -1,4 +1,4 @@
-# What RelayStand is for
+# What Baton is for
 
 The tour. If you only want to install it, the [README](../README.md) is enough.
 
@@ -14,7 +14,7 @@ the fourth morning running, and nobody notices it was the fourth, because
 yesterday's meeting left no trace. The notes, if anyone takes them, are a flat
 list per day with no thread between them.
 
-RelayStand keeps the thread. An unfinished task walks itself to the next
+Baton keeps the thread. An unfinished task walks itself to the next
 standup carrying the date it first appeared, so "still on the auth thing" shows
 up as a bar four days long, in amber, without anyone having to remember.
 
@@ -139,8 +139,8 @@ Worth saying, so nobody files an issue for a decision:
 ## Where the data lives
 
 One SQLite file. Everything — organisations, teams, standups, tasks, the audit
-trail — is in it, on the `relaystand-data` volume in Docker or
+trail — is in it, on the `baton-data` volume in Docker or
 `prisma/dev.db` locally. Copy that file and you have copied the instance.
 
-There is no export in the interface yet. `sqlite3 relaystand.db .dump` is the
+There is no export in the interface yet. `sqlite3 baton.db .dump` is the
 current answer, and a proper one is on the list.

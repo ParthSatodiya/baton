@@ -38,7 +38,7 @@ ENV PORT=3000
 # HEALTHCHECK below can never reach it.
 ENV HOSTNAME=0.0.0.0
 # The SQLite file lives on a volume, not in the image.
-ENV DATABASE_URL="file:/data/relaystand.db"
+ENV DATABASE_URL="file:/data/baton.db"
 
 RUN apk add --no-cache openssl && mkdir -p /data && chown node:node /data /app
 

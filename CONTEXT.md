@@ -1,4 +1,4 @@
-# RelayStand — domain glossary
+# Baton — domain glossary
 
 The words this project uses, and the ones it deliberately doesn't. When code, a
 commit message, an issue title or a test name touches a concept below, use the
@@ -83,7 +83,7 @@ summary composed on write, so the log page stays a dumb list.
 
 ## Words we don't use
 
-- **Ticket** — a *link* on a task, pointing at Jira or Linear. RelayStand is not
+- **Ticket** — a *link* on a task, pointing at Jira or Linear. Baton is not
   a tracker and does not own tickets. Don't call a task a ticket.
 - **Sprint, backlog, story, epic** — not concepts here. The unit is a day.
 - **Workspace, tenant** — say *org*.

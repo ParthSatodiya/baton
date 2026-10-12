@@ -1,7 +1,7 @@
 /**
  * Who is allowed to sign in at all.
  *
- * This matters more for RelayStand than for most self-hosted apps. A Google or
+ * This matters more for Baton than for most self-hosted apps. A Google or
  * Entra OAuth client in its usual "any account" mode will happily authenticate
  * every Google account on earth, and anyone who gets that far can create their
  * own organisation here (`POST /api/orgs`). Joining *your* organisation still

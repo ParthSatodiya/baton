@@ -4,7 +4,7 @@ How the engineering skills should consume this repo's domain documentation when 
 
 ## Before exploring, read these
 
-- **`CONTEXT.md`** at the repo root: the glossary of RelayStand's domain terms.
+- **`CONTEXT.md`** at the repo root: the glossary of Baton's domain terms.
 - **`docs/adr/`**: read ADRs that touch the area you're about to work in.
 
 This is a single-context repo — one `CONTEXT.md`, one `docs/adr/`, both at the root. (A multi-context repo would have a `CONTEXT-MAP.md` at the root pointing at per-context `CONTEXT.md` files; this one doesn't.)

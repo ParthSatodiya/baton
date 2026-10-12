@@ -32,7 +32,7 @@ if (process.env.AUTH_GITHUB_ID) {
         async request({ tokens }: { tokens: { access_token?: string } }) {
           const headers = {
             Authorization: `Bearer ${tokens.access_token}`,
-            'User-Agent': 'relaystand',
+            'User-Agent': 'baton',
           };
           const [profile, res] = await Promise.all([
             fetch('https://api.github.com/user', { headers }).then((r) => r.json()),
@@ -83,7 +83,7 @@ export const enabledProviders = providers.map((p) => {
 
 if (demoMode()) {
   console.warn(
-    '[relaystand] DEMO MODE: anyone who reaches /login can sign in as the demo ' +
+    '[baton] DEMO MODE: anyone who reaches /login can sign in as the demo ' +
       'lead, with no password. Local use only — it cannot be switched on in a ' +
       'production build.'
   );
@@ -95,7 +95,7 @@ if (demoMode()) {
 // nobody new — so it does not trigger this on its own.
 if (providers.length > (demoMode() ? 1 : 0) && signUpIsOpen()) {
   console.warn(
-    '[relaystand] Sign-in is open to any account your provider authenticates. ' +
+    '[baton] Sign-in is open to any account your provider authenticates. ' +
       'Set AUTH_ALLOWED_DOMAINS or AUTH_ALLOWED_EMAILS to restrict it.'
   );
 }

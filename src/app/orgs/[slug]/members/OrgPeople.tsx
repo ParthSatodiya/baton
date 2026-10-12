@@ -275,7 +275,7 @@ export default function OrgPeople({
             </form>
             <p className="text-sm text-dim">
               They join the moment they first sign in with that address. No email is sent yet — tell
-              them to go to RelayStand and sign in.
+              them to go to Baton and sign in.
             </p>
           </section>
 

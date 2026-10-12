@@ -34,7 +34,7 @@ mkdirSync(dir, { recursive: true });
 
 // UTC, so a set of backups sorts by name wherever the server thinks it is.
 const stamp = new Date().toISOString().slice(0, 16).replace(/[:-]/g, '');
-const out = path.resolve(dir, `relaystand-${stamp}Z.db`);
+const out = path.resolve(dir, `baton-${stamp}Z.db`);
 
 const db = new DatabaseSync(src);
 // Quoted and escaped: the path comes from argv, and VACUUM INTO takes no
