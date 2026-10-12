@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 — 2026-10-11
+## 0.2.0 — 2026-10-13
 
 First published release, and the first container image.
 
@@ -32,7 +32,7 @@ First published release, and the first container image.
   as JSON from Settings, and `npm run backup` takes a consistent snapshot of the
   database while the app keeps serving.
 - **Official container images**, published per release to
-  `ghcr.io/parthsatodiya/relaystand` for amd64 and arm64. The container runs as
+  `ghcr.io/parthsatodiya/baton` for amd64 and arm64. The container runs as
   a non-root user and reports its own health on `/api/health`, which reads the
   database rather than merely answering.
 - **One definition of "today", set by `TZ`.** A standup day is the team's day,
@@ -45,7 +45,7 @@ First published release, and the first container image.
 ### Known limits
 
 Stated plainly, and covered in full in
-[SECURITY.md](https://github.com/ParthSatodiya/relaystand/blob/main/SECURITY.md): there is no
+[SECURITY.md](https://github.com/ParthSatodiya/baton/blob/main/SECURITY.md): there is no
 rate limiting on any route, removal of a member is a soft delete, and SQLite
 plus local file storage means a single container — there is no clustering story
 yet.
