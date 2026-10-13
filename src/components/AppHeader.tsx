@@ -55,14 +55,16 @@ export default async function AppHeader({
           <span aria-hidden="true" className="h-1.5 w-4 rounded-full bg-baton" />
         </Link>
 
+        {/* Below sm a menu hangs off the header's edges, not its summary's:
+            from the summary a 256px menu ran 37px past a 320px screen. */}
         {org && (
-          <details className="group relative">
+          <details className="group relative max-sm:static">
             <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-2 py-1 text-sm hover:bg-chalk/8">
               <OrgMark org={org} size={5} url={org.logoPath ? storage().url(org.logoPath) : undefined} />
               <span className="max-w-40 truncate font-medium">{org.name}</span>
               <ChevronDown size={14} className="text-dim transition group-open:rotate-180" />
             </summary>
-            <div className="absolute left-0 z-10 mt-1 w-64 rounded-md border border-line bg-raised p-1 shadow-[0_14px_34px_rgba(0,0,0,.45)]">
+            <div className="absolute left-0 z-10 mt-1 w-64 max-sm:inset-x-4 max-sm:w-auto rounded-md border border-line bg-raised p-1 shadow-[0_14px_34px_rgba(0,0,0,.45)]">
               {orgs.map((o) => (
                 <Link
                   key={o.id}
@@ -110,7 +112,7 @@ export default async function AppHeader({
         )}
 
         {team && org && (
-          <details className="group relative">
+          <details className="group relative max-sm:static">
             <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-2 py-1 text-sm hover:bg-chalk/8">
               <span aria-hidden="true" className="text-dim">
                 /
@@ -118,7 +120,7 @@ export default async function AppHeader({
               <span className="max-w-48 truncate font-medium">{team.name}</span>
               <ChevronDown size={14} className="text-dim transition group-open:rotate-180" />
             </summary>
-            <div className="absolute left-0 z-10 mt-1 w-60 rounded-md border border-line bg-raised p-1 shadow-[0_14px_34px_rgba(0,0,0,.45)]">
+            <div className="absolute left-0 z-10 mt-1 w-60 max-sm:inset-x-4 max-sm:w-auto rounded-md border border-line bg-raised p-1 shadow-[0_14px_34px_rgba(0,0,0,.45)]">
               {switchable.map((t) => (
                 <Link
                   key={t.id}
