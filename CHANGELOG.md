@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0 — 2026-10-14
+
+### Added
+- Menus and the day picker open with a short grow from where you clicked, and buttons give a small press when you click them. (4e897b8)
+
+### Fixed
+- The Board, Reports and Members tabs line up with the rest of the page on wide screens. (826ec01)
+- The board's day picker can be used from the keyboard: arrow keys move between days, Page Up and Page Down change month, and Escape returns you to the date. (2341725)
+- Small labels across the app, such as the tab counts, the day picker and the week grid's notes, are larger and easier to read. (d1b609f)
+- Every button now shows the pointer cursor on hover. (bf6d2bf)
+- The organisation and team menus no longer run off the edge of a narrow phone screen. (b1c6d70)
+- Blocked tasks, held days and the board's blocked count are now marked by shape and words as well as colour, and read out by screen readers. (895d882)
+- When adding or editing a task fails, what you typed stays in the field instead of disappearing. (66c5897)
+
 ## 0.2.1 — 2026-10-13
 
 ### Added
