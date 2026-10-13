@@ -15,6 +15,8 @@ export default function OrgMark({
   url?: string;
 }) {
   const [broken, setBroken] = useState(false);
+  // 9px: two initials in a 20px square are an icon, not text — the one
+  // exception to the text-xs floor in DESIGN.md.
   const box = { 5: 'size-5 text-[9px]', 8: 'size-8 text-xs', 12: 'size-12 text-base' }[size];
 
   if (org.logoPath && url && !broken) {

@@ -90,7 +90,7 @@ export default function WeekGrid({
               }`}
             >
               {format(parseISO(col.date), 'EEE d')}
-              {!col.held && <span className="block text-[10px] text-dim">no standup</span>}
+              {!col.held && <span className="block text-xs text-dim">no standup</span>}
             </div>
           ))}
         </div>
@@ -133,7 +133,7 @@ export default function WeekGrid({
                 >
                   {member.memberName}
                 </Link>
-                <span className="flex items-center gap-2 text-[11px] uppercase tracking-[0.1em] text-dim">
+                <span className="flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-dim">
                   {member.role === 'lead'
                     ? 'Lead'
                     : member.role === 'observer'
@@ -179,7 +179,7 @@ export default function WeekGrid({
                     key={col.date}
                     className="hatch-away relative border-l border-line-soft shadow-[inset_0_2px_0_var(--color-warn)]"
                   >
-                    <span className="absolute right-1.5 bottom-0.5 text-[10px] uppercase tracking-[0.12em] text-warn">
+                    <span className="absolute right-1.5 bottom-0.5 text-xs uppercase tracking-[0.12em] text-warn">
                       away
                     </span>
                   </div>
@@ -305,7 +305,7 @@ export default function WeekGrid({
             day is left blank — it has nothing to carry forward yet. */}
         {editable && week.columns.some((col) => !col.held && col.date <= today) && (
           <div className="grid border-t border-line" style={track}>
-            <p className="py-3 pr-3 text-[11px] uppercase tracking-[0.12em] text-dim">
+            <p className="py-3 pr-3 text-xs uppercase tracking-[0.12em] text-dim">
               Nothing held
             </p>
             <div

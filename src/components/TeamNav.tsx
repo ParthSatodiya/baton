@@ -65,10 +65,10 @@ export default function TeamNav({
           {tab.label}
           {/* A count is data about the page, not part of its name, so it gets
               its own chip. Blocked adds the octagon and the words, not just
-              coral — and no coral tint, which drops the 10px figure to 4.06:1. */}
+              coral — and no coral tint, which drops the small figure to 4.06:1. */}
           {tab.count !== undefined && (
             <span
-              className={`ml-2 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 align-middle text-[10px] tabular-nums ${
+              className={`ml-2 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 align-middle text-xs tabular-nums ${
                 tab.alert
                   ? 'text-stall ring-1 ring-stall ring-inset'
                   : current(tab.href)
@@ -76,7 +76,7 @@ export default function TeamNav({
                     : 'bg-chalk/10 text-dim'
               }`}
             >
-              {tab.alert && <OctagonAlert size={10} aria-hidden="true" />}
+              {tab.alert && <OctagonAlert size={12} aria-hidden="true" />}
               {tab.count}
               {tab.alert && <span className="sr-only">, something blocked</span>}
             </span>

@@ -100,7 +100,7 @@ export default function Members({
               <p className={`font-medium ${member.isActive ? '' : 'text-dim line-through'}`}>
                 {member.name}
                 {member.id === myMemberId && (
-                  <span className="ml-2 rounded bg-baton px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-baton-ink">
+                  <span className="ml-2 rounded bg-baton px-1.5 py-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-baton-ink">
                     you
                   </span>
                 )}

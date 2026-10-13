@@ -80,7 +80,7 @@ export default function Board({
             <button
               onClick={() => goto(today)}
               disabled={date === today}
-              className="cursor-pointer rounded-full border border-line px-2.5 py-0.5 text-[11px] uppercase tracking-[0.11em] text-dim transition hover:border-baton hover:text-baton disabled:opacity-30 disabled:hover:border-line disabled:hover:text-dim"
+              className="cursor-pointer rounded-full border border-line px-2.5 py-0.5 text-xs uppercase tracking-[0.11em] text-dim transition hover:border-baton hover:text-baton disabled:opacity-30 disabled:hover:border-line disabled:hover:text-dim"
             >
               Today
             </button>

@@ -237,7 +237,7 @@ export default function Reports({
                 }`}
               >
                 {item.days}
-                <span className="block font-sans text-[10px] tracking-[0.12em] text-dim">DAYS</span>
+                <span className="block font-sans text-xs tracking-[0.12em] text-dim">DAYS</span>
               </p>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">

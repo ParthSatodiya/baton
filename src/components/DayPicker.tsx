@@ -76,7 +76,7 @@ export default function DayPicker({
 
       <div className="mt-2 grid grid-cols-7 gap-0.5 text-center">
         {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
-          <span key={i} className="pb-1 text-[10px] uppercase tracking-[0.08em] text-dim">
+          <span key={i} className="pb-1 text-xs uppercase tracking-[0.08em] text-dim">
             {d}
           </span>
         ))}
@@ -96,7 +96,7 @@ export default function DayPicker({
                 isHeld ? `, standup held${blocked ? ', something blocked' : ''}` : ''
               }`}
               title={isHeld ? `Standup held${blocked ? ' — something blocked' : ''}` : undefined}
-              className={`relative rounded py-1.5 pb-2.5 text-[13px] tabular-nums transition disabled:opacity-25 ${
+              className={`relative rounded py-1.5 pb-2.5 text-sm tabular-nums transition disabled:opacity-25 ${
                 day === date
                   ? 'bg-baton font-semibold text-baton-ink'
                   : `${outside ? 'text-dim' : 'text-chalk'} enabled:hover:bg-chalk/8`
@@ -117,7 +117,7 @@ export default function DayPicker({
         })}
       </div>
 
-      <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-dim">
+      <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-dim">
         <span>
           <span className="mr-1 inline-block size-1 rounded-full bg-baton align-middle" />
           standup held

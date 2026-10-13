@@ -211,7 +211,7 @@ export default function Walkthrough({
             Finished {completed ? format(parseISO(completed.date), 'EEEE') : 'last standup'}
           </h3>
           {yesterday.length === 0 ? (
-            <p className="mt-3 text-[15px] text-dim">Nothing finished.</p>
+            <p className="mt-3 text-base text-dim">Nothing finished.</p>
           ) : (
             <ul className="mt-1">
               {yesterday.map((item) => {
@@ -220,7 +220,7 @@ export default function Walkthrough({
                   <li key={item.id} className="flex items-start gap-3 py-2.5">
                     <Check size={17} className="mt-1 shrink-0 text-baton" />
                     <span className="flex flex-wrap items-center gap-2">
-                      <span className="text-[15px] leading-relaxed">{item.title}</span>
+                      <span className="text-base leading-relaxed">{item.title}</span>
                       <LinkChips links={item.links} />
                       {backOnToday ? (
                         <span className="text-xs text-dim">Back on today&apos;s plan</span>

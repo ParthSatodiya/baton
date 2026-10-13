@@ -68,6 +68,10 @@ Scale (Tailwind sizes):
 Every column of digits gets `tabular-nums`. No exceptions — dates and day counts
 jitter without it.
 
+Nothing smaller than `text-xs`, and no pixel sizes (`text-[11px]`): a chip,
+a column note or a legend is `text-xs`. The one exception is the initials
+inside `OrgMark`'s 20px square, which work as an icon rather than as text.
+
 ## The lane
 
 The one idea worth protecting. A task's bar is drawn from the day it **first
