@@ -47,42 +47,43 @@ export default function TeamNav({
   };
 
   return (
-    <nav
-      aria-label="Team"
-      className="-mb-px flex gap-1 overflow-x-auto border-b border-line bg-raised px-4"
-    >
-      {tabs.map((tab) => (
-        <Link
-          key={tab.label}
-          href={tab.href}
-          aria-current={current(tab.href) ? 'page' : undefined}
-          className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm transition ${
-            current(tab.href)
-              ? 'border-baton font-semibold text-chalk'
-              : 'border-transparent text-dim hover:text-chalk'
-          }`}
-        >
-          {tab.label}
-          {/* A count is data about the page, not part of its name, so it gets
-              its own chip. Blocked adds the octagon and the words, not just
-              coral — and no coral tint, which drops the small figure to 4.06:1. */}
-          {tab.count !== undefined && (
-            <span
-              className={`ml-2 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 align-middle text-xs tabular-nums ${
-                tab.alert
-                  ? 'text-stall ring-1 ring-stall ring-inset'
-                  : current(tab.href)
-                    ? 'bg-baton/15 text-baton'
-                    : 'bg-chalk/10 text-dim'
-              }`}
-            >
-              {tab.alert && <OctagonAlert size={12} aria-hidden="true" />}
-              {tab.count}
-              {tab.alert && <span className="sr-only">, something blocked</span>}
-            </span>
-          )}
-        </Link>
-      ))}
+    <nav aria-label="Team" className="-mb-px border-b border-line bg-raised">
+      {/* Same column as the header above: px-1 plus each tab's px-3 puts the
+          first label on the wordmark's 16px edge. */}
+      <div className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-1">
+        {tabs.map((tab) => (
+          <Link
+            key={tab.label}
+            href={tab.href}
+            aria-current={current(tab.href) ? 'page' : undefined}
+            className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm transition ${
+              current(tab.href)
+                ? 'border-baton font-semibold text-chalk'
+                : 'border-transparent text-dim hover:text-chalk'
+            }`}
+          >
+            {tab.label}
+            {/* A count is data about the page, not part of its name, so it gets
+                its own chip. Blocked adds the octagon and the words, not just
+                coral — and no coral tint, which drops the small figure to 4.06:1. */}
+            {tab.count !== undefined && (
+              <span
+                className={`ml-2 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 align-middle text-xs tabular-nums ${
+                  tab.alert
+                    ? 'text-stall ring-1 ring-stall ring-inset'
+                    : current(tab.href)
+                      ? 'bg-baton/15 text-baton'
+                      : 'bg-chalk/10 text-dim'
+                }`}
+              >
+                {tab.alert && <OctagonAlert size={12} aria-hidden="true" />}
+                {tab.count}
+                {tab.alert && <span className="sr-only">, something blocked</span>}
+              </span>
+            )}
+          </Link>
+        ))}
+      </div>
     </nav>
   );
 }
