@@ -81,7 +81,7 @@ export default function Board({
             <button
               onClick={() => goto(today)}
               disabled={date === today}
-              className="cursor-pointer rounded-full border border-line px-2.5 py-0.5 text-xs uppercase tracking-[0.11em] text-dim transition hover:border-baton hover:text-baton disabled:opacity-30 disabled:hover:border-line disabled:hover:text-dim"
+              className="rounded-full border border-line px-2.5 py-0.5 text-xs disabled:cursor-not-allowed uppercase tracking-[0.11em] text-dim transition hover:border-baton hover:text-baton disabled:opacity-30 disabled:hover:border-line disabled:hover:text-dim"
             >
               Today
             </button>
@@ -149,7 +149,7 @@ export default function Board({
               aria-pressed={only.includes(chip.status)}
               disabled={!board}
               title={`Show only ${chip.label}`}
-              className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1 text-sm tabular-nums transition disabled:opacity-40 ${
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 disabled:cursor-not-allowed text-sm tabular-nums transition disabled:opacity-40 ${
                 only.includes(chip.status) ? chip.on : 'border-line text-dim hover:text-chalk'
               }`}
             >
