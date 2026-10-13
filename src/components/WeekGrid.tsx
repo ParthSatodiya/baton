@@ -61,7 +61,7 @@ export default function WeekGrid({
   standupId: number | null;
   editable: boolean;
   busy: boolean;
-  run: (fn: () => Promise<unknown>) => Promise<void>;
+  run: (fn: () => Promise<unknown>) => Promise<boolean>;
 }) {
   const [addFor, setAddFor] = useState<number | null>(null);
   // No chip pressed and every chip pressed say the same thing.
@@ -264,22 +264,20 @@ export default function WeekGrid({
               <form
                 style={{ gridColumn: '1 / -1', gridRow: 2 }}
                 className="flex flex-wrap items-center gap-2 pb-3"
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  if (!title.trim()) return;
-                  const body = JSON.stringify({
-                    memberId: member.memberId,
-                    title,
-                    links: [],
-                  });
-                  setTitle('');
-                  setAddFor(null);
-                  run(() =>
+                  if (!title.trim() || busy) return;
+                  // Close only once it saved: a failed add keeps what was typed.
+                  const saved = await run(() =>
                     api(`/api/standups/${standupId}/items`, {
                       method: 'POST',
-                      body,
+                      body: JSON.stringify({ memberId: member.memberId, title, links: [] }),
                     }),
                   );
+                  if (saved) {
+                    setTitle('');
+                    setAddFor(null);
+                  }
                 }}
               >
                 <input

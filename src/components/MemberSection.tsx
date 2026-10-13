@@ -58,7 +58,7 @@ export function AbsenceToggle({
   memberId: number;
   absent: boolean;
   busy: boolean;
-  run: (fn: () => Promise<unknown>) => Promise<void>;
+  run: (fn: () => Promise<unknown>) => Promise<boolean>;
 }) {
   return (
     <label className="flex cursor-pointer select-none items-center gap-1.5 text-xs text-dim">
@@ -105,7 +105,7 @@ export default function MemberSection({
   standupId: number;
   editable: boolean;
   busy: boolean;
-  run: (fn: () => Promise<unknown>) => Promise<void>;
+  run: (fn: () => Promise<unknown>) => Promise<boolean>;
   doneLastStandup: number;
   /** Run mode names the person itself, in the display face. */
   hideHeader?: boolean;
@@ -243,22 +243,25 @@ export default function MemberSection({
       {editable && member.isActive && (
         <form
           className="flex flex-wrap gap-2 border-t border-line-soft pt-3"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            if (!title.trim()) return;
+            if (!title.trim() || busy) return;
             const payload = {
               memberId: member.memberId,
               title,
               links: link ? [link] : [],
             };
-            setTitle('');
-            setLink('');
-            run(() =>
+            // Clear only once it saved: a failed add keeps what was typed.
+            const saved = await run(() =>
               api(`/api/standups/${standupId}/items`, {
                 method: 'POST',
                 body: JSON.stringify(payload),
               }),
             );
+            if (saved) {
+              setTitle('');
+              setLink('');
+            }
           }}
         >
           <label htmlFor={`new-task-${member.memberId}`} className={`${ui.label} basis-full`}>
@@ -313,7 +316,7 @@ function ItemRow({
   standupId: number;
   editable: boolean;
   busy: boolean;
-  run: (fn: () => Promise<unknown>) => Promise<void>;
+  run: (fn: () => Promise<unknown>) => Promise<boolean>;
   dragging: boolean;
   isOver: boolean;
   onDragStart: () => void;
@@ -440,9 +443,9 @@ function ItemRow({
         <div className="flex gap-2">
           <button
             disabled={busy || !draft.title.trim()}
-            onClick={() => {
-              setEditing(false);
-              run(() => api(url, { method: 'PUT', body: JSON.stringify(draft) }));
+            onClick={async () => {
+              if (await run(() => api(url, { method: 'PUT', body: JSON.stringify(draft) })))
+                setEditing(false);
             }}
             className={`${ui.btn} ${ui.btnPrimary} py-1.5`}
           >

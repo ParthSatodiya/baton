@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 /**
  * Every mutation goes through here: call the API, then re-render on the server.
  * `busy` covers both halves — the request, then the refresh — so a form stays
- * disabled until the new server render lands.
+ * disabled until the new server render lands. Resolves to whether it worked,
+ * so a form clears only once its text is safely saved.
  */
 export function useRun() {
   const router = useRouter();
@@ -21,8 +22,10 @@ export function useRun() {
         await fn();
         setError('');
         startTransition(() => router.refresh());
+        return true;
       } catch (e) {
         setError((e as Error).message);
+        return false;
       } finally {
         setSaving(false);
       }
