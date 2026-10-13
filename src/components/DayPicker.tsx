@@ -112,7 +112,7 @@ export default function DayPicker({
       ref={box}
       role="dialog"
       aria-label="Pick a standup day"
-      className="absolute left-0 top-full z-20 mt-2 w-72 rounded-md border border-line bg-raised p-3 shadow-[0_18px_40px_rgba(0,0,0,.5)]"
+      className="absolute left-0 top-full z-20 mt-2 w-72 origin-top-left rounded-md border border-line bg-raised p-3 shadow-[0_18px_40px_rgba(0,0,0,.5)] transition-[opacity,scale] duration-150 ease-out starting:scale-97 starting:opacity-0"
     >
       <div className="flex items-center justify-between">
         <button

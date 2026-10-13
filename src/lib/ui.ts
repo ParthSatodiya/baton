@@ -4,7 +4,9 @@ export const ui = {
   input:
     // text-base below sm: iOS Safari zooms the page when a focused field is under 16px.
     'rounded border border-line bg-raised px-3 py-2 text-base text-chalk outline-none transition sm:text-sm placeholder:text-dim focus:border-baton focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-baton',
-  btn: 'inline-flex cursor-pointer items-center justify-center gap-1.5 rounded px-3.5 py-2 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-baton disabled:cursor-not-allowed',
+  // Press scale answers the click before the server does. Scale, not transform,
+  // in Tailwind 4 — `transition` already covers it.
+  btn: 'inline-flex cursor-pointer items-center justify-center gap-1.5 rounded px-3.5 py-2 text-sm font-medium transition ease-out enabled:active:scale-97 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-baton disabled:cursor-not-allowed',
   // Dimming the baton fill turns it olive, so a disabled primary drops the fill
   // entirely rather than fading it.
   btnPrimary:

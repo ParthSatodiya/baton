@@ -64,7 +64,7 @@ export default async function AppHeader({
               <span className="max-w-40 truncate font-medium">{org.name}</span>
               <ChevronDown size={14} className="text-dim transition group-open:rotate-180" />
             </summary>
-            <div className="absolute left-0 z-10 mt-1 w-64 max-sm:inset-x-4 max-sm:w-auto rounded-md border border-line bg-raised p-1 shadow-[0_14px_34px_rgba(0,0,0,.45)]">
+            <div className="absolute left-0 z-10 mt-1 w-64 origin-top-left max-sm:inset-x-4 max-sm:w-auto rounded-md border border-line bg-raised p-1 shadow-[0_14px_34px_rgba(0,0,0,.45)] transition-[opacity,scale] duration-150 ease-out starting:scale-97 starting:opacity-0">
               {orgs.map((o) => (
                 <Link
                   key={o.id}
@@ -120,7 +120,7 @@ export default async function AppHeader({
               <span className="max-w-48 truncate font-medium">{team.name}</span>
               <ChevronDown size={14} className="text-dim transition group-open:rotate-180" />
             </summary>
-            <div className="absolute left-0 z-10 mt-1 w-60 max-sm:inset-x-4 max-sm:w-auto rounded-md border border-line bg-raised p-1 shadow-[0_14px_34px_rgba(0,0,0,.45)]">
+            <div className="absolute left-0 z-10 mt-1 w-60 origin-top-left max-sm:inset-x-4 max-sm:w-auto rounded-md border border-line bg-raised p-1 shadow-[0_14px_34px_rgba(0,0,0,.45)] transition-[opacity,scale] duration-150 ease-out starting:scale-97 starting:opacity-0">
               {switchable.map((t) => (
                 <Link
                   key={t.id}

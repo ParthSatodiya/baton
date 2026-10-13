@@ -564,7 +564,7 @@ function ItemRow({
                     }),
                   )
                 }
-                className={`grid size-6 place-items-center rounded-md transition ${
+                className={`grid size-6 place-items-center rounded-md transition ease-out enabled:active:scale-95 ${
                   item.status === value
                     ? `${statusPill[value]} ring-1`
                     : 'text-dim hover:bg-chalk/8 hover:text-chalk'
