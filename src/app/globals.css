@@ -72,6 +72,16 @@ body {
   }
 }
 
+/* Tailwind 4's preflight gives buttons the arrow. Anything you can press gets
+   the hand, once, here — not a cursor-pointer on every button. */
+@layer base {
+  button:not(:disabled),
+  summary,
+  label:has(> input:is([type="checkbox"], [type="radio"]):not(:disabled)) {
+    cursor: pointer;
+  }
+}
+
 /* Motion is opt-in. Colour and opacity changes still land, just instantly. */
 @media (prefers-reduced-motion: reduce) {
   *,
