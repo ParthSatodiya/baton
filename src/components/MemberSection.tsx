@@ -155,10 +155,10 @@ export default function MemberSection({
           those tasks sit to each other. 20px here against 24px between rows. */
         <header className="flex flex-wrap items-center justify-between gap-2 pt-3 pb-2">
           {/* The identity block is the link, not the whole card — the rest of the
-            card is buttons, inputs and drag targets. */}
+            card is buttons, inputs and drag targets. No aria-label: it would
+            replace the content and hide "on leave", the role and the counts. */}
           <Link
             href={`/teams/${teamId}/walkthrough?date=${date}&member=${member.memberId}`}
-            aria-label={`Walk through ${member.memberName}'s day`}
             className="group flex items-center gap-2.5 rounded-lg"
           >
             <span

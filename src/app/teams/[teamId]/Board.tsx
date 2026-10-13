@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
@@ -44,6 +44,7 @@ export default function Board({
   const router = useRouter();
   const { run, error, busy } = useRun();
   const [picking, setPicking] = useState(false);
+  const dateButton = useRef<HTMLButtonElement>(null);
   // Which statuses the week shows. None picked and all picked mean the same
   // thing — show everything — so the chips need no separate clear control.
   const [only, setOnly] = useState<string[]>([]);
@@ -100,19 +101,24 @@ export default function Board({
               <ChevronRight size={16} />
             </button>
           </div>
-          <button
-            onClick={() => setPicking((open) => !open)}
-            aria-expanded={picking}
-            aria-haspopup="dialog"
-            className={`${ui.h1} cursor-pointer border-b border-dashed pb-0.5 transition ${
-              picking ? 'border-baton text-baton' : 'border-chalk/35 hover:text-baton'
-            }`}
-          >
-            {format(parseISO(date), 'EEEE d MMMM')}
-          </button>
+          {/* The date is the page's title as well as its control. */}
+          <h1>
+            <button
+              ref={dateButton}
+              onClick={() => setPicking((open) => !open)}
+              aria-expanded={picking}
+              aria-haspopup="dialog"
+              className={`${ui.h1} cursor-pointer border-b border-dashed pb-0.5 transition ${
+                picking ? 'border-baton text-baton' : 'border-chalk/35 hover:text-baton'
+              }`}
+            >
+              {format(parseISO(date), 'EEEE d MMMM')}
+            </button>
+          </h1>
 
           {picking && (
             <DayPicker
+              anchor={dateButton}
               date={date}
               today={today}
               days={days}
