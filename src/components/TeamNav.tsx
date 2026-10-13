@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { OctagonAlert } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 interface Tab {
@@ -63,19 +64,21 @@ export default function TeamNav({
         >
           {tab.label}
           {/* A count is data about the page, not part of its name, so it gets
-              its own chip. Coral when something on it is blocked. */}
+              its own chip. Blocked adds the octagon and the words, not just
+              coral — and no coral tint, which drops the 10px figure to 4.06:1. */}
           {tab.count !== undefined && (
             <span
-              aria-label={tab.alert ? `${tab.count}, something blocked` : undefined}
-              className={`ml-2 rounded px-1.5 py-0.5 align-middle text-[10px] tabular-nums ${
+              className={`ml-2 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 align-middle text-[10px] tabular-nums ${
                 tab.alert
-                  ? 'bg-stall/15 text-stall'
+                  ? 'text-stall ring-1 ring-stall ring-inset'
                   : current(tab.href)
                     ? 'bg-baton/15 text-baton'
                     : 'bg-chalk/10 text-dim'
               }`}
             >
+              {tab.alert && <OctagonAlert size={10} aria-hidden="true" />}
               {tab.count}
+              {tab.alert && <span className="sr-only">, something blocked</span>}
             </span>
           )}
         </Link>

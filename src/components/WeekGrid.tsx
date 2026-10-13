@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { Check, Play, Plus, X } from 'lucide-react';
 import { api } from '@/lib/api';
-import { daysTone, initials, ui } from '@/lib/ui';
+import { daysTone, initials, statusLabel, ui } from '@/lib/ui';
 
 export interface Bar {
   id: number;
@@ -211,6 +211,9 @@ export default function WeekGrid({
                 <div
                   key={bar.id}
                   style={{ gridColumn: `${bar.from + 1} / ${bar.to + 2}` }}
+                  // Filtered out: faded for the eye, gone for the keyboard and
+                  // the screen reader — not a 1.8:1 link still in the tab order.
+                  inert={dimmed(bar.status)}
                   className={`group/bar relative flex min-w-0 items-center transition ${
                     dimmed(bar.status) ? 'opacity-20' : ''
                   }`}
@@ -229,6 +232,8 @@ export default function WeekGrid({
                     } ${bar.startsBefore ? 'rounded-l-none border-l-4 border-l-warn' : ''}`}
                   >
                     <span className="truncate">{bar.title}</span>
+                    {/* Fill, hatch and outline say the state to the eye only. */}
+                    <span className="sr-only">, {statusLabel[bar.status]}</span>
                     <span
                       className={`ml-auto shrink-0 tabular-nums ${
                         bar.status === 'done' ? 'text-baton-ink/65' : daysTone(bar.daysDragging)

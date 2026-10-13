@@ -91,20 +91,25 @@ export default function DayPicker({
               disabled={ahead}
               onClick={() => onPick(day)}
               aria-current={day === date ? 'date' : undefined}
+              // The mark under the number is drawn for the eye; say it in words.
+              aria-label={`${format(parseISO(day), 'EEEE d MMMM')}${
+                isHeld ? `, standup held${blocked ? ', something blocked' : ''}` : ''
+              }`}
               title={isHeld ? `Standup held${blocked ? ' — something blocked' : ''}` : undefined}
               className={`relative rounded py-1.5 pb-2.5 text-[13px] tabular-nums transition disabled:opacity-25 ${
                 day === date
                   ? 'bg-baton font-semibold text-baton-ink'
-                  : `${outside ? 'text-dim/50' : 'text-chalk'} enabled:hover:bg-chalk/8`
+                  : `${outside ? 'text-dim' : 'text-chalk'} enabled:hover:bg-chalk/8`
               } ${day === today && day !== date ? 'ring-1 ring-baton ring-inset' : ''}`}
             >
               {format(parseISO(day), 'd')}
               {isHeld && (
                 <span
                   aria-hidden="true"
-                  className={`absolute bottom-1 left-1/2 size-1 -translate-x-1/2 rounded-full ${
-                    day === date ? 'bg-baton-ink' : blocked ? 'bg-stall' : 'bg-baton'
-                  }`}
+                  // Blocked is a dash, held a dot: the two read apart without hue.
+                  className={`absolute bottom-1 left-1/2 h-1 -translate-x-1/2 rounded-full ${
+                    blocked ? 'w-3' : 'w-1'
+                  } ${day === date ? 'bg-baton-ink' : blocked ? 'bg-stall' : 'bg-baton'}`}
                 />
               )}
             </button>
@@ -118,7 +123,7 @@ export default function DayPicker({
           standup held
         </span>
         <span>
-          <span className="mr-1 inline-block size-1 rounded-full bg-stall align-middle" />
+          <span className="mr-1 inline-block h-1 w-3 rounded-full bg-stall align-middle" />
           something blocked
         </span>
         <span>ring = today</span>

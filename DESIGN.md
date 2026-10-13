@@ -112,8 +112,8 @@ only takes a column if the team actually stood up on it.
 - **The date is the control.** The board's title *is* the stepper: `Today` and
   both arrows sit in front of it, and pressing the date opens the day picker
   (`src/components/DayPicker.tsx`) — our own, not the native one, because only
-  ours can say which days the team stood up on: a lime dot for held, coral when
-  that day had something blocked, a ring on today, future days disabled. The
+  ours can say which days the team stood up on: a lime dot for held, a coral dash when
+  that day had something blocked (shape, not just hue), a ring on today, future days disabled. The
   buttons come first because a day name runs from "Friday" to "Wednesday"; after
   the title they moved with it, and a second click on › landed on `Today`.
 - **Run standup is the board's one baton control** — a primary button beside the
