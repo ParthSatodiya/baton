@@ -45,6 +45,11 @@ database model is `StandupItem` and the code says `item`; **the user-facing
 word is always "task"**. Both are correct in their place — don't write "item" in
 UI copy, don't rename the model in code.
 
+**Comment** — the note on a task for *that day*: what got done, what is still
+pending. It is not carried forward — each day's copy starts empty, and the
+board shows the note from the day it was carried from underneath. Something
+that should stick to the task belongs in its title or a link.
+
 **Status** — exactly three: `open`, `done`, `blocked`. On screen they read
 *running*, *finished*, *blocked* (`statusLabel` in `src/lib/ui.ts`). There is no
 fourth, and "carried forward" is not one of them.

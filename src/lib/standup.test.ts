@@ -20,6 +20,7 @@ type Export = typeof import('@/lib/export');
 let prisma: (typeof import('@/lib/db'))['default'];
 let startStandup: Lib['startStandup'];
 let loadWeek: Lib['loadWeek'];
+let loadBoard: Lib['loadBoard'];
 let weekColumns: Lib['weekColumns'];
 let stepDay: Lib['stepDay'];
 let monthGrid: Days['monthGrid'];
@@ -53,7 +54,7 @@ before(async () => {
   execFileSync('npx', ['prisma', 'migrate', 'deploy'], { env: process.env, stdio: 'pipe' });
 
   prisma = (await import('@/lib/db')).default;
-  ({ startStandup, daysDragging, reopenItem, assignItem, loadWeek, weekColumns, stepDay } =
+  ({ startStandup, daysDragging, reopenItem, assignItem, loadBoard, loadWeek, weekColumns, stepDay } =
     await import('@/lib/standup'));
   ({ monthGrid } = await import('@/lib/days'));
   ({ taskLink } = await import('@/lib/links'));
@@ -938,4 +939,78 @@ test('a wrapped trailer becomes one changelog line', async () => {
     commit.changelog,
     'Official container images, published per release to ghcr.io/example/app for amd64 and arm64.'
   );
+});
+
+// A task's comment is that day's note — "done X, Y still pending" — so each
+// day's row writes its own, and the day before shows underneath.
+test('a carried task starts the day with an empty comment', async () => {
+  const notes = await prisma.team.create({ data: { name: 'Notes', orgId: org.id, createdBy: user.id } });
+  const dev = await prisma.teamMember.create({
+    data: { teamId: notes.id, name: 'Dev', email: 'asha@company.com' },
+  });
+  const mon = await prisma.standup.create({ data: { teamId: notes.id, date: MON, createdBy: user.id } });
+  await prisma.standupItem.create({
+    data: { standupId: mon.id, memberId: dev.id, title: 'Long one', comment: 'API done, UI pending', originDate: MON },
+  });
+
+  const tue = await startStandup(notes.id, TUE, user.id);
+  const carried = await prisma.standupItem.findFirstOrThrow({ where: { standupId: tue.id } });
+  assert.equal(carried.comment, '', 'today starts with nothing written');
+  const monday = await prisma.standupItem.findFirstOrThrow({ where: { standupId: mon.id } });
+  assert.equal(monday.comment, 'API done, UI pending', "monday's note is left where it was written");
+});
+
+test('a reopened task starts the day with an empty comment too', async () => {
+  const notes = await prisma.team.findFirstOrThrow({ where: { name: 'Notes' } });
+  const mon = await prisma.standup.findUniqueOrThrow({
+    where: { teamId_date: { teamId: notes.id, date: MON } },
+  });
+  const dev = await prisma.teamMember.findFirstOrThrow({ where: { teamId: notes.id } });
+  const shipped = await prisma.standupItem.create({
+    data: { standupId: mon.id, memberId: dev.id, title: 'Shipped?', comment: 'Merged', status: 'done', originDate: MON },
+  });
+  const wed = await prisma.standup.create({ data: { teamId: notes.id, date: WED, createdBy: user.id } });
+
+  const back = await reopenItem(shipped.id, wed.id);
+  assert.equal(back.comment, '', 'the reopen says what happens next, not what was said monday');
+});
+
+test('a carried task shows the note from the day it came from', async () => {
+  const notes = await prisma.team.findFirstOrThrow({ where: { name: 'Notes' } });
+  const tue = await prisma.standup.findUniqueOrThrow({
+    where: { teamId_date: { teamId: notes.id, date: TUE } },
+  });
+  const dev = await prisma.teamMember.findFirstOrThrow({ where: { teamId: notes.id } });
+  await prisma.standupItem.create({
+    data: { standupId: tue.id, memberId: dev.id, title: 'Fresh', comment: 'Started', originDate: TUE },
+  });
+
+  const row = async (title: string) =>
+    (await loadBoard(notes.id, TUE))!.members[0].items.find((i) => i.title === title)!;
+
+  assert.deepEqual((await row('Long one')).previous, { date: MON, comment: 'API done, UI pending' });
+  assert.equal((await row('Fresh')).previous, null, 'raised today, nothing came before');
+
+  // Typing yesterday's note again says nothing new.
+  await prisma.standupItem.updateMany({
+    where: { standupId: tue.id, title: 'Long one' },
+    data: { comment: 'API done, UI pending' },
+  });
+  assert.equal((await row('Long one')).previous, null);
+});
+
+test('the week bar shows the newest note written, not a blank day', async () => {
+  const notes = await prisma.team.findFirstOrThrow({ where: { name: 'Notes' } });
+  const tue = await prisma.standup.findUniqueOrThrow({
+    where: { teamId_date: { teamId: notes.id, date: TUE } },
+  });
+  const say = (comment: string) =>
+    prisma.standupItem.updateMany({ where: { standupId: tue.id, title: 'Long one' }, data: { comment } });
+  const bar = async () =>
+    (await loadWeek(notes.id, TUE)).members.flatMap((m) => m.bars).find((b) => b.title === 'Long one')!;
+
+  await say('');
+  assert.equal((await bar()).comment, 'API done, UI pending', "tuesday wrote nothing, so monday's stands");
+  await say('UI half done');
+  assert.equal((await bar()).comment, 'UI half done');
 });

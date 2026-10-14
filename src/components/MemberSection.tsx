@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { format, parseISO } from 'date-fns';
 import {
   Check,
   ChevronDown,
@@ -26,6 +27,8 @@ export interface Item {
   comment: string;
   status: string;
   carriedFromId: number | null;
+  /** The note from the day it was carried from, when it differs from today's. */
+  previous: { date: string; comment: string } | null;
   daysDragging: number;
 }
 
@@ -373,7 +376,7 @@ function ItemRow({
           id={`edit-task-comment-${item.id}`}
           value={draft.comment}
           onChange={(e) => setDraft({ ...draft, comment: e.target.value })}
-          placeholder="Comment"
+          placeholder="Today: done, still pending"
           className={`${ui.input} w-full py-1.5`}
         />
 
@@ -525,6 +528,12 @@ function ItemRow({
             </span>
           )}
         </div>
+        {item.previous && (
+          <p className="mt-0.5 text-xs text-dim">
+            <span className="tabular-nums">{format(parseISO(item.previous.date), 'EEE')}:</span>{' '}
+            {item.previous.comment}
+          </p>
+        )}
         {item.comment && <p className="mt-0.5 text-xs text-dim">{item.comment}</p>}
 
         {/* The lane. Width is how long this has been running, fill is its state —
