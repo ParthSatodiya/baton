@@ -80,6 +80,9 @@ export default function Walkthrough({
   // Arrow keys, because this gets driven from across the room.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Arrows inside a field move the caret, not the person.
+      const t = e.target as HTMLElement;
+      if (t.isContentEditable || t.closest('input, textarea, select')) return;
       if (e.key === 'ArrowLeft') step(-1);
       if (e.key === 'ArrowRight') step(1);
     };
