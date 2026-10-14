@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.1 — 2026-10-15
+
+### Added
+- The board and the Run standup screen pick up other people's changes on their own every 15 seconds while on screen, and straight away when you come back to the browser. (3cfb7c0, 96668b6)
+- A carried task starts each day with a fresh comment, and the previous day's note shows underneath it. (978ad1d)
+- A task shows the time it was added, so you can see who got their day written up before standup. (7a82cd2)
+
+### Fixed
+- Picking a developer or a date on the reports page no longer jumps back to the top. (7f996e2)
+- In Run standup, arrow keys and their shortcuts work inside a task editor again instead of jumping to the next person. (82a0414)
+
 ## 0.3.0 — 2026-10-14
 
 ### Added

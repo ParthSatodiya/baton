@@ -48,7 +48,7 @@ anything.** Make a directory, put these two files in it, and start.
 ```yaml
 services:
   baton:
-    image: ghcr.io/parthsatodiya/baton:0.3.0
+    image: ghcr.io/parthsatodiya/baton:0.3.1
     restart: unless-stopped
     ports:
       - '3000:3000'
