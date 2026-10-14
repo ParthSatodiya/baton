@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
@@ -43,6 +43,27 @@ export default function Board({
 }) {
   const router = useRouter();
   const { run, error, busy } = useRun();
+
+  // Other people's edits land without a reload: refresh every 15s while the
+  // tab is visible, pause while it is hidden, and catch up the moment it comes
+  // back. Visibility, not focus — a board shared into a call stays live while
+  // the lead talks in another window. Drafts survive: refresh keeps state.
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval> | undefined;
+    const start = () => (timer = setInterval(() => router.refresh(), 15_000));
+    const onVisibility = () => {
+      clearInterval(timer);
+      if (document.hidden) return;
+      router.refresh();
+      start();
+    };
+    if (!document.hidden) start();
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [router]);
   const [picking, setPicking] = useState(false);
   const dateButton = useRef<HTMLButtonElement>(null);
   // Which statuses the week shows. None picked and all picked mean the same
