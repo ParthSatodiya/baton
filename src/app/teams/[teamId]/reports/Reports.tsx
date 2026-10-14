@@ -72,7 +72,8 @@ export default function Reports({
     const next = new URLSearchParams(search.toString());
     if (value) next.set(key, value);
     else next.delete(key);
-    router.push(`/teams/${teamId}/reports?${next}`);
+    // A filter change is the same page, so stay where the reader is.
+    router.push(`/teams/${teamId}/reports?${next}`, { scroll: false });
   }
 
   const totals = data.summary.reduce(
