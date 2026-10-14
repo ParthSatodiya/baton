@@ -6,6 +6,7 @@ import { format, parseISO } from 'date-fns';
 import { Check, ChevronLeft, ChevronRight, RotateCcw, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useRun } from '@/lib/useRun';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 import type { LinkRow } from '@/lib/links';
 import { daysTone, initials, ui } from '@/lib/ui';
 import LinkChips from '@/components/LinkChips';
@@ -65,6 +66,7 @@ export default function Walkthrough({
 }) {
   const members = board?.members ?? [];
   const { run, error, busy } = useRun();
+  useLiveRefresh();
   const [at, setAt] = useState(() =>
     Math.max(
       0,
