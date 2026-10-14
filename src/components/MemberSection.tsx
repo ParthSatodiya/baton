@@ -29,6 +29,8 @@ export interface Item {
   carriedFromId: number | null;
   /** The note from the day it was carried from, when it differs from today's. */
   previous: { date: string; comment: string } | null;
+  /** "09:42", or "Wed 09:42" when typed on another day. Null on a carried copy. */
+  addedAt: string | null;
   daysDragging: number;
 }
 
@@ -513,6 +515,12 @@ function ItemRow({
             {item.title}
           </span>
           <LinkChips links={item.links} />
+          {item.addedAt && (
+            <span className="text-xs text-dim tabular-nums">
+              <span className="sr-only">Added at </span>
+              {item.addedAt}
+            </span>
+          )}
           {item.carriedFromId !== null && (
             <span
               className={`rounded px-1.5 py-0.5 text-xs tabular-nums ${daysTone(item.daysDragging)}`}

@@ -81,6 +81,12 @@ export async function loadBoard(teamId: number, date: string) {
             i.carriedFrom?.comment && i.carriedFrom.comment !== i.comment
               ? { date: i.carriedFrom.standup.date, comment: i.carriedFrom.comment }
               : null,
+          // When someone typed it in, on the team's clock (the server's TZ).
+          // A carried copy was made by the standup, so it has no such time.
+          addedAt:
+            i.carriedFromId === null
+              ? format(i.createdAt, format(i.createdAt, 'yyyy-MM-dd') === date ? 'HH:mm' : 'EEE HH:mm')
+              : null,
           links: i.links.map((l) => ({ url: l.url })),
           daysDragging: daysDragging(i.originDate, date),
         }));

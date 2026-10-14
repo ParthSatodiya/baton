@@ -1014,3 +1014,24 @@ test('the week bar shows the newest note written, not a blank day', async () => 
   await say('UI half done');
   assert.equal((await bar()).comment, 'UI half done');
 });
+
+test('a task added that day shows the time it went on, on the team clock', async () => {
+  const notes = await prisma.team.findFirstOrThrow({ where: { name: 'Notes' } });
+  const tue = await prisma.standup.findUniqueOrThrow({
+    where: { teamId_date: { teamId: notes.id, date: TUE } },
+  });
+  const dev = await prisma.teamMember.findFirstOrThrow({ where: { teamId: notes.id } });
+  // Local-time literals: the server's TZ is the team's clock.
+  await prisma.standupItem.createMany({
+    data: [
+      { standupId: tue.id, memberId: dev.id, title: 'Before standup', originDate: TUE, createdAt: new Date(`${TUE}T09:42:00`) },
+      { standupId: tue.id, memberId: dev.id, title: 'Filled in later', originDate: TUE, createdAt: new Date(`${WED}T08:05:00`) },
+    ],
+  });
+
+  const items = (await loadBoard(notes.id, TUE))!.members[0].items;
+  const at = (title: string) => items.find((i) => i.title === title)!.addedAt;
+  assert.equal(at('Before standup'), '09:42');
+  assert.equal(at('Filled in later'), 'Wed 08:05', 'added on another day says which');
+  assert.equal(at('Long one'), null, 'a carried copy was made by the standup, not typed by anyone');
+});
