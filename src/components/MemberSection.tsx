@@ -387,13 +387,15 @@ function ItemRow({
         <label htmlFor={`edit-task-comment-${item.id}`} className="sr-only">
           Comment
         </label>
-        <input
+        {/* Grows with what is typed; Enter is a new line, Save is the button. */}
+        <textarea
           id={`edit-task-comment-${item.id}`}
           autoFocus={!editable}
+          rows={2}
           value={draft.comment}
           onChange={(e) => setDraft({ ...draft, comment: e.target.value })}
           placeholder="Today: done, still pending"
-          className={`${ui.input} w-full py-1.5`}
+          className={`${ui.input} field-sizing-content block max-h-60 min-h-16 w-full resize-y py-1.5 leading-relaxed`}
         />
 
         {editable && roster.length > 1 && (
@@ -557,10 +559,14 @@ function ItemRow({
         {item.previous && (
           <p className="mt-0.5 text-xs text-dim">
             <span className="tabular-nums">{format(parseISO(item.previous.date), 'EEE')}:</span>{' '}
-            {item.previous.comment}
+            <span className="whitespace-pre-line">{item.previous.comment}</span>
           </p>
         )}
-        {item.comment && <p className="mt-0.5 text-xs text-dim">{item.comment}</p>}
+        {item.comment && (
+          <p className="mt-1 max-w-[65ch] border-l-2 border-line pl-2 text-xs leading-relaxed whitespace-pre-line break-words text-dim">
+            {item.comment}
+          </p>
+        )}
 
         {/* The lane. Width is how long this has been running, fill is its state —
             the same three shapes the reports and the team list draw. */}
