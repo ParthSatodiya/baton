@@ -87,9 +87,9 @@ is nine days old no matter whose row it sits in now.
 
 ### Someone is away
 
-Tick **On leave**. Their unfinished work stops carrying forward while they are
-out, so the board does not fill with a week of untouched rows, and Reports
-counts their absent days separately rather than reading them as zero output.
+Tick **On leave**. Their unfinished work keeps carrying forward while they are
+out, so it is all still there when they come back, and Reports counts their
+absent days separately rather than reading them as zero output.
 
 ### Someone joins mid-week
 
