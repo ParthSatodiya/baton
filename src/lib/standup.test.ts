@@ -24,6 +24,7 @@ let loadBoard: Lib['loadBoard'];
 let weekColumns: Lib['weekColumns'];
 let stepDay: Lib['stepDay'];
 let monthGrid: Days['monthGrid'];
+let canStartOn: Days['canStartOn'];
 let reopenItem: Lib['reopenItem'];
 let assignItem: Lib['assignItem'];
 let daysDragging: Lib['daysDragging'];
@@ -56,7 +57,7 @@ before(async () => {
   prisma = (await import('@/lib/db')).default;
   ({ startStandup, daysDragging, reopenItem, assignItem, loadBoard, loadWeek, weekColumns, stepDay } =
     await import('@/lib/standup'));
-  ({ monthGrid } = await import('@/lib/days'));
+  ({ monthGrid, canStartOn } = await import('@/lib/days'));
   ({ taskLink } = await import('@/lib/links'));
   ({ teamContext, requireTeamMember, requireStandupStarter } = await import('@/lib/access'));
   ({ auditTeamFilter, logEvent } = await import('@/lib/audit'));
@@ -163,6 +164,14 @@ test('finishing on wednesday stops the carry; the blocker keeps ageing', async (
 
 test('a day cannot be started twice', async () => {
   await assert.rejects(() => startStandup(team.id, THU, user.id), /already exists/);
+});
+
+test('a skipped day cannot be started once a later day is held', async () => {
+  // Tuesday was skipped; Wednesday and Thursday are held.
+  await assert.rejects(() => startStandup(team.id, TUE, user.id), /already held/);
+  assert.equal(canStartOn(TUE, THU, [THU, WED, MON]), false);
+  assert.equal(canStartOn('2026-03-06', THU, [THU, WED, MON]), false, 'not a future day');
+  assert.equal(canStartOn('2026-03-06', '2026-03-06', [THU, WED, MON]), true);
 });
 
 test('a lead can reopen a task finished on an earlier day', async () => {

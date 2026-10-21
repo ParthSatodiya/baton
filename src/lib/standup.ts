@@ -282,6 +282,16 @@ export async function startStandup(teamId: number, date: string, userId: number)
   });
   if (existing) throw new HttpError(409, 'A standup already exists for that date');
 
+  // A gap behind a day already held stays a gap: filling it would copy tasks
+  // the later day already carries. Work finished then goes on the later day.
+  const later = await prisma.standup.findFirst({
+    where: { teamId, date: { gt: date } },
+    select: { date: true },
+  });
+  if (later) {
+    throw new HttpError(409, `The ${later.date} standup is already held; tick that work there`);
+  }
+
   const previous = await prisma.standup.findFirst({
     where: { teamId, date: { lt: date } },
     orderBy: { date: 'desc' },

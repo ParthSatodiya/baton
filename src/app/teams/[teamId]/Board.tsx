@@ -8,7 +8,7 @@ import { ChevronLeft, ChevronRight, Play, Plus } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useRun } from '@/lib/useRun';
 import { useLiveRefresh } from '@/lib/useLiveRefresh';
-import { stepDay } from '@/lib/days';
+import { canStartOn, stepDay } from '@/lib/days';
 import { STALLED_DAYS, ui } from '@/lib/ui';
 import MemberSection, { type MemberRow } from '@/components/MemberSection';
 import WeekGrid, { type Week } from '@/components/WeekGrid';
@@ -60,6 +60,7 @@ export default function Board({
   // The arrows walk working days — the weekend is not a place the team works,
   // unless they stood up on one. The date field is the way onto any other day.
   const shift = (dir: -1 | 1) => stepDay(date, dir, week.heldDates);
+  const startable = canStartOn(date, today, week.heldDates);
   const items = board?.members.flatMap((m) => m.items) ?? [];
   // What the tab icon says: something is blocked, or something unfinished has
   // been running long enough to count as stuck.
@@ -220,12 +221,13 @@ export default function Board({
 
       {!board && (
         <p className="text-sm text-dim md:hidden">
-          No standup on this day yet. Starting one copies every unfinished task from the last
-          standup you held — even if that was several days ago.
+          {startable
+            ? 'No standup on this day yet. Starting one copies every unfinished task from the last standup you held — even if that was several days ago.'
+            : 'No standup on this day. Work finished on it goes on the next standup held.'}
         </p>
       )}
 
-      {!board && me.canWrite && (
+      {!board && me.canWrite && startable && (
         <button
           disabled={busy}
           onClick={() =>

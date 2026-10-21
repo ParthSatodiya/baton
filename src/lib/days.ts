@@ -66,3 +66,14 @@ export function weekColumns(endDate: string, standupDates: Iterable<string>, cou
   }
   return columns.reverse();
 }
+
+/**
+ * Whether a day with no standup can still be started. Not a future day, and
+ * not a gap behind one already held: starting it would copy tasks the later
+ * day already carries, and the later day's "finished" would read the empty gap.
+ */
+export function canStartOn(date: string, today: string, standupDates: Iterable<string>) {
+  if (date > today) return false;
+  for (const held of standupDates) if (held > date) return false;
+  return true;
+}

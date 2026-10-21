@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { Check, Play, Plus, X } from 'lucide-react';
 import { api } from '@/lib/api';
+import { canStartOn } from '@/lib/days';
 import { daysTone, initials, statusLabel, ui } from '@/lib/ui';
 
 export interface Bar {
@@ -302,8 +303,9 @@ export default function WeekGrid({
         ))}
 
         {/* The empty-day action, in the column of the day it starts. A future
-            day is left blank — it has nothing to carry forward yet. */}
-        {editable && week.columns.some((col) => !col.held && col.date <= today) && (
+            day is left blank — it has nothing to carry forward yet — and so is
+            a gap behind a day already held. */}
+        {editable && week.columns.some((col) => !col.held && canStartOn(col.date, today, week.heldDates)) && (
           <div className="grid border-t border-line" style={track}>
             <p className="py-3 pr-3 text-xs uppercase tracking-[0.12em] text-dim">
               Nothing held
@@ -318,7 +320,7 @@ export default function WeekGrid({
             >
               {week.columns.map((col) => (
                 <div key={col.date} className="grid place-items-center py-2">
-                  {!col.held && col.date <= today && (
+                  {!col.held && canStartOn(col.date, today, week.heldDates) && (
                     <button
                       disabled={busy}
                       title={`Start the standup for ${format(
