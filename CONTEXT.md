@@ -58,11 +58,20 @@ fourth, and "carried forward" is not one of them.
 *before* the target date onto a new one. Not "from yesterday": reaching further
 back is what makes a skipped day work.
 
+**Closed day** — a standup with a later one after it. Its tasks are read-only,
+because carry-forward has already copied them; leave, notes and task comments
+still change. See [ADR-0004](docs/adr/0004-a-day-closes-once-the-next-starts.md).
+
 **Carried from** — `carriedFromId`, the link from a copy to the task it came
 from. A task is carried forward if this is set. Again: not a status.
 
 **Origin date** — `originDate`, the day a task first appeared, copied forward
 unchanged for the life of the task. Never recomputed.
+
+**Last note** — `lastNote` and `lastNoteDate`, the newest note an earlier day
+wrote on a task, carried forward with it like the origin date. It is what the
+board shows as "Mon: …" under a task, and it survives a quiet day. Never read by
+walking the carried-from chain.
 
 **Days dragging** — how long a task has been alive: a subtraction,
 `target − originDate`. Never a walk up the carried-from chain. See
