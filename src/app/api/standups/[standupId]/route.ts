@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { logEvent } from '@/lib/audit';
 import { errorResponse, parseId, requireStandupAccess } from '@/lib/perms';
+import { requireOpenDay } from '@/lib/standup';
 
 interface Context {
   params: Promise<{ standupId: string }>;
@@ -34,6 +35,8 @@ export async function DELETE(_req: NextRequest, context: Context) {
     if (!isLead) {
       return NextResponse.json({ error: 'Only a team lead can delete a standup' }, { status: 403 });
     }
+    // Only the latest day: a day in the middle takes its ticked tasks with it.
+    await requireOpenDay(standup);
 
     await prisma.standup.delete({ where: { id: standupId } });
     await logEvent({

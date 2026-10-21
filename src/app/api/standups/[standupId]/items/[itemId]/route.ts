@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import prisma from '@/lib/db';
 import { logEvent } from '@/lib/audit';
 import { errorResponse, HttpError, parseId, requireItemAccess } from '@/lib/perms';
-import { assignItem, isStatus } from '@/lib/standup';
+import { assignItem, isStatus, requireOpenDay } from '@/lib/standup';
 import { cleanLinks } from '@/lib/links';
 
 interface Context {
@@ -16,6 +16,11 @@ export async function PUT(req: NextRequest, context: Context) {
     const { user, item, team } = await requireItemAccess(itemId);
 
     const { title, links, comment, status, memberId } = await req.json();
+    // A comment is that day's note and is never carried, so it may still be
+    // written on a closed day. Anything else waits for an open one.
+    const onlyComment =
+      title === undefined && links === undefined && status === undefined && memberId === undefined;
+    if (!onlyComment) await requireOpenDay(item.standup);
     const data: Prisma.StandupItemUpdateInput = {};
     if (title !== undefined) {
       if (!String(title).trim()) throw new HttpError(400, 'title cannot be empty');
@@ -56,7 +61,8 @@ export async function PUT(req: NextRequest, context: Context) {
 export async function DELETE(_req: NextRequest, context: Context) {
   try {
     const itemId = parseId((await context.params).itemId, 'item ID');
-    await requireItemAccess(itemId);
+    const { item } = await requireItemAccess(itemId);
+    await requireOpenDay(item.standup);
     await prisma.standupItem.delete({ where: { id: itemId } });
     return new NextResponse(null, { status: 204 });
   } catch (e) {

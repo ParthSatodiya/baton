@@ -18,6 +18,7 @@ import TabMark from '@/components/TabMark';
 interface BoardData {
   id: number;
   notes: string;
+  closed: boolean;
   members: MemberRow[];
 }
 
@@ -198,6 +199,13 @@ export default function Board({
         </p>
       )}
 
+      {board?.closed && me.canWrite && (
+        <p className="text-sm text-dim">
+          A later standup has started, so this day&apos;s tasks are read-only. Make changes on
+          the latest day. Leave, notes and task comments can still change here.
+        </p>
+      )}
+
       {/* The desk view: the working week as lanes. Below md it would be five
           unreadable columns, so the phone gets the day's list instead. */}
       <section className="hidden md:block">
@@ -213,7 +221,7 @@ export default function Board({
           today={date}
           only={only}
           standupId={board?.id ?? null}
-          editable={me.canWrite}
+          editable={me.canWrite && !board?.closed}
           busy={busy}
           run={run}
         />
@@ -265,6 +273,7 @@ export default function Board({
                 busy={busy}
                 run={run}
                 doneLastStandup={doneLastStandup[member.memberId] ?? 0}
+                closed={board.closed}
               />
             ))}
             {board.members.length === 0 && (

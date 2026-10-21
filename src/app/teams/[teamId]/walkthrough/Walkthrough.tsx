@@ -14,6 +14,7 @@ import MemberSection, { AbsenceToggle, type MemberRow } from '@/components/Membe
 
 interface BoardData {
   id: number;
+  closed: boolean;
   members: MemberRow[];
 }
 
@@ -162,6 +163,12 @@ export default function Walkthrough({
         </p>
       )}
 
+      {board.closed && (
+        <p className="mt-4 text-sm text-dim">
+          A later standup has started, so this day is read-only. Leave and comments can still change.
+        </p>
+      )}
+
       <div className="mt-7 flex flex-wrap items-center gap-5 border-b border-line pb-5">
         <span
           aria-hidden="true"
@@ -267,7 +274,8 @@ export default function Walkthrough({
                           {backOnToday ? (
                             <span className="text-xs text-dim">Back on today&apos;s plan</span>
                           ) : (
-                            editable && (
+                            editable &&
+                            !board.closed && (
                               <button
                                 disabled={busy}
                                 onClick={() =>
@@ -304,6 +312,7 @@ export default function Walkthrough({
             roster={members.filter((m) => m.isActive)}
             standupId={board.id}
             editable={editable}
+            closed={board.closed}
             busy={busy}
             run={run}
             doneLastStandup={0}

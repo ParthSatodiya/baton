@@ -20,6 +20,7 @@ type Export = typeof import('@/lib/export');
 let prisma: (typeof import('@/lib/db'))['default'];
 let startStandup: Lib['startStandup'];
 let finishedSince: Lib['finishedSince'];
+let requireOpenDay: Lib['requireOpenDay'];
 let loadWeek: Lib['loadWeek'];
 let loadBoard: Lib['loadBoard'];
 let weekColumns: Lib['weekColumns'];
@@ -56,7 +57,7 @@ before(async () => {
   execFileSync('npx', ['prisma', 'migrate', 'deploy'], { env: process.env, stdio: 'pipe' });
 
   prisma = (await import('@/lib/db')).default;
-  ({ startStandup, daysDragging, reopenItem, assignItem, loadBoard, loadWeek, weekColumns, stepDay, finishedSince } =
+  ({ startStandup, daysDragging, reopenItem, assignItem, loadBoard, loadWeek, weekColumns, stepDay, finishedSince, requireOpenDay } =
     await import('@/lib/standup'));
   ({ monthGrid, canStartOn } = await import('@/lib/days'));
   ({ taskLink } = await import('@/lib/links'));
@@ -163,6 +164,15 @@ test('finishing on wednesday stops the carry; the blocker keeps ageing', async (
   assert.equal(daysDragging(items[0].originDate, THU), 3, 'still counted from monday, not wednesday');
 });
 
+test('a day is closed to task changes once a later standup has started', async () => {
+  await assert.rejects(() => requireOpenDay({ teamId: team.id, date: MON }), /already started/);
+  await assert.rejects(() => requireOpenDay({ teamId: team.id, date: WED }), /already started/);
+  await requireOpenDay({ teamId: team.id, date: THU });
+  const board = await loadBoard(team.id, WED);
+  assert.equal(board?.closed, true, 'the board says so, to hide the buttons');
+  assert.equal((await loadBoard(team.id, THU))?.closed, false);
+});
+
 test('back from leave, run standup reaches past the away days to the last day here', async () => {
   const wed = await prisma.standup.findUniqueOrThrow({
     where: { teamId_date: { teamId: team.id, date: WED } },
@@ -193,7 +203,7 @@ test('a day cannot be started twice', async () => {
 
 test('a skipped day cannot be started once a later day is held', async () => {
   // Tuesday was skipped; Wednesday and Thursday are held.
-  await assert.rejects(() => startStandup(team.id, TUE, user.id), /already held/);
+  await assert.rejects(() => startStandup(team.id, TUE, user.id), /already started/);
   assert.equal(canStartOn(TUE, THU, [THU, WED, MON]), false);
   assert.equal(canStartOn('2026-03-06', THU, [THU, WED, MON]), false, 'not a future day');
   assert.equal(canStartOn('2026-03-06', '2026-03-06', [THU, WED, MON]), true);

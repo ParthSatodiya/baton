@@ -101,6 +101,7 @@ export default function MemberSection({
   busy,
   run,
   doneLastStandup,
+  closed = false,
   hideHeader = false,
 }: {
   teamId: number;
@@ -112,6 +113,8 @@ export default function MemberSection({
   busy: boolean;
   run: (fn: () => Promise<unknown>) => Promise<boolean>;
   doneLastStandup: number;
+  /** A later standup has started: tasks are read-only, leave still toggles. */
+  closed?: boolean;
   /** Run mode names the person itself, in the display face. */
   hideHeader?: boolean;
 }) {
@@ -225,7 +228,8 @@ export default function MemberSection({
             owner={member.memberId}
             roster={roster}
             standupId={standupId}
-            editable={editable}
+            editable={editable && !closed}
+            canComment={editable}
             busy={busy}
             run={run}
             dragging={dragId === item.id}
@@ -245,7 +249,7 @@ export default function MemberSection({
         )}
       </ul>
 
-      {editable && member.isActive && (
+      {editable && !closed && member.isActive && (
         <form
           className="flex flex-wrap gap-2 border-t border-line-soft pt-3"
           onSubmit={async (e) => {
@@ -304,6 +308,7 @@ function ItemRow({
   roster,
   standupId,
   editable,
+  canComment,
   busy,
   run,
   dragging,
@@ -320,6 +325,8 @@ function ItemRow({
   roster: MemberRow[];
   standupId: number;
   editable: boolean;
+  /** Still true on a closed day: the comment is that day's note, never carried. */
+  canComment: boolean;
   busy: boolean;
   run: (fn: () => Promise<unknown>) => Promise<boolean>;
   dragging: boolean;
@@ -360,29 +367,36 @@ function ItemRow({
   if (editing) {
     return (
       <li className="space-y-2 rounded bg-baton/8 px-3 py-3">
-        <label htmlFor={`edit-task-${item.id}`} className="sr-only">
-          Task
-        </label>
-        <input
-          id={`edit-task-${item.id}`}
-          autoFocus
-          value={draft.title}
-          onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-          placeholder="Task"
-          className={`${ui.input} w-full py-1.5`}
-        />
+        {editable ? (
+          <>
+            <label htmlFor={`edit-task-${item.id}`} className="sr-only">
+              Task
+            </label>
+            <input
+              id={`edit-task-${item.id}`}
+              autoFocus
+              value={draft.title}
+              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+              placeholder="Task"
+              className={`${ui.input} w-full py-1.5`}
+            />
+          </>
+        ) : (
+          <p className="text-sm">{item.title}</p>
+        )}
         <label htmlFor={`edit-task-comment-${item.id}`} className="sr-only">
           Comment
         </label>
         <input
           id={`edit-task-comment-${item.id}`}
+          autoFocus={!editable}
           value={draft.comment}
           onChange={(e) => setDraft({ ...draft, comment: e.target.value })}
           placeholder="Today: done, still pending"
           className={`${ui.input} w-full py-1.5`}
         />
 
-        {roster.length > 1 && (
+        {editable && roster.length > 1 && (
           <div className="flex items-center gap-2">
             <label htmlFor={`edit-task-owner-${item.id}`} className="text-xs text-dim">
               Assigned to
@@ -407,49 +421,53 @@ function ItemRow({
           </div>
         )}
 
-        <div className="space-y-1.5">
-          {draft.links.map((value, index) => (
-            <div key={index} className="flex gap-2">
-              <label htmlFor={`edit-task-link-${item.id}-${index}`} className="sr-only">
-                Link {index + 1}
-              </label>
-              <input
-                id={`edit-task-link-${item.id}-${index}`}
-                value={value}
-                onChange={(e) => setLinkAt(index, e.target.value)}
-                placeholder="Jira ticket, GitHub PR, anything else"
-                className={`${ui.input} min-w-0 flex-1 py-1.5`}
-              />
+        {editable && (
+          <div className="space-y-1.5">
+            {draft.links.map((value, index) => (
+              <div key={index} className="flex gap-2">
+                <label htmlFor={`edit-task-link-${item.id}-${index}`} className="sr-only">
+                  Link {index + 1}
+                </label>
+                <input
+                  id={`edit-task-link-${item.id}-${index}`}
+                  value={value}
+                  onChange={(e) => setLinkAt(index, e.target.value)}
+                  placeholder="Jira ticket, GitHub PR, anything else"
+                  className={`${ui.input} min-w-0 flex-1 py-1.5`}
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDraft((d) => {
+                      const links = d.links.filter((_, i) => i !== index);
+                      return { ...d, links: links.length > 0 ? links : [''] };
+                    })
+                  }
+                  aria-label={`Remove link ${index + 1}`}
+                  className={`${ui.btn} ${ui.btnSubtle} px-2 py-1.5`}
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            ))}
+            {draft.links.length < MAX_LINKS && (
               <button
                 type="button"
-                onClick={() =>
-                  setDraft((d) => {
-                    const links = d.links.filter((_, i) => i !== index);
-                    return { ...d, links: links.length > 0 ? links : [''] };
-                  })
-                }
-                aria-label={`Remove link ${index + 1}`}
-                className={`${ui.btn} ${ui.btnSubtle} px-2 py-1.5`}
+                onClick={() => setDraft((d) => ({ ...d, links: [...d.links, ''] }))}
+                className="text-xs font-medium text-baton hover:underline"
               >
-                <X size={15} />
+                + Add link
               </button>
-            </div>
-          ))}
-          {draft.links.length < MAX_LINKS && (
-            <button
-              type="button"
-              onClick={() => setDraft((d) => ({ ...d, links: [...d.links, ''] }))}
-              className="text-xs font-medium text-baton hover:underline"
-            >
-              + Add link
-            </button>
-          )}
-        </div>
+            )}
+          </div>
+        )}
         <div className="flex gap-2">
           <button
             disabled={busy || !draft.title.trim()}
             onClick={async () => {
-              if (await run(() => api(url, { method: 'PUT', body: JSON.stringify(draft) })))
+              // A closed day takes the comment alone; sending the rest would be refused.
+              const body = editable ? draft : { comment: draft.comment };
+              if (await run(() => api(url, { method: 'PUT', body: JSON.stringify(body) })))
                 setEditing(false);
             }}
             className={`${ui.btn} ${ui.btnPrimary} py-1.5`}
@@ -633,7 +651,19 @@ function ItemRow({
           )}
         </div>
       ) : (
-        <span className={`${pill} ${statusPill[item.status]}`}>{statusLabel[item.status]}</span>
+        <div className="flex items-center gap-1">
+          <span className={`${pill} ${statusPill[item.status]}`}>{statusLabel[item.status]}</span>
+          {canComment && (
+            <button
+              onClick={() => setEditing(true)}
+              title="Edit comment"
+              aria-label="Edit comment"
+              className={`grid size-7 place-items-center rounded-md text-dim hover:bg-chalk/8 hover:text-chalk ${ui.rowAction}`}
+            >
+              <Pencil size={14} />
+            </button>
+          )}
+        </div>
       )}
     </li>
   );

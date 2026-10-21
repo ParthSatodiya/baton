@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { errorResponse, parseId, requireItemAccess, requireStandupAccess } from '@/lib/perms';
 import { logEvent } from '@/lib/audit';
-import { reopenItem } from '@/lib/standup';
+import { reopenItem, requireOpenDay } from '@/lib/standup';
 
 interface Context {
   params: Promise<{ standupId: string; itemId: string }>;
@@ -14,8 +14,10 @@ export async function POST(_req: NextRequest, context: Context) {
     const standupId = parseId(params.standupId, 'standup ID');
     const itemId = parseId(params.itemId, 'item ID');
     // Both ends checked: the day it lands on, and the task it came from — a
-    // lead may reopen anyone's, a dev only their own.
-    await requireStandupAccess(standupId);
+    // lead may reopen anyone's, a dev only their own. Only the day it lands on
+    // has to be open; the task it came from is only read.
+    const { standup } = await requireStandupAccess(standupId);
+    await requireOpenDay(standup);
     const { user, item, team } = await requireItemAccess(itemId);
 
     const back = await reopenItem(itemId, standupId);

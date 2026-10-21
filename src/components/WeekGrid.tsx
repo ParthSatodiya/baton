@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { Check, Play, Plus, X } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -64,6 +65,7 @@ export default function WeekGrid({
   busy: boolean;
   run: (fn: () => Promise<unknown>) => Promise<boolean>;
 }) {
+  const router = useRouter();
   const [addFor, setAddFor] = useState<number | null>(null);
   // No chip pressed and every chip pressed say the same thing.
   const filtering = only.length > 0 && only.length < 3;
@@ -74,6 +76,19 @@ export default function WeekGrid({
   const cols = week.columns.length;
   const last = week.columns[cols - 1];
   // Grid columns: the person, then one a day. Inline because the count is data.
+  // A bar spans days; open the one under the pointer, not always the last. A
+  // skipped day under the bar has no row, so step back to the day before it.
+  // The keyboard cannot point, so Enter keeps the link's own day: the last.
+  function openDay(e: React.MouseEvent<HTMLAnchorElement>, bar: Bar) {
+    const box = e.currentTarget.getBoundingClientRect();
+    const span = bar.to - bar.from + 1;
+    let at = bar.from + Math.min(span - 1, Math.floor(((e.clientX - box.left) / box.width) * span));
+    while (at > bar.from && !week.columns[at].held) at--;
+    const date = week.columns[at].date;
+    if (date === bar.date) return;
+    e.preventDefault();
+    router.push(`/teams/${teamId}/walkthrough?date=${date}&member=${bar.memberId}`);
+  }
   const track = {
     gridTemplateColumns: `minmax(140px, 200px) repeat(${cols}, minmax(96px, 1fr))`,
   };
@@ -128,12 +143,17 @@ export default function WeekGrid({
                 </span>
               )}
               <span className="min-w-0">
-                <Link
-                  href={`/teams/${teamId}/walkthrough?date=${last.date}&member=${member.memberId}`}
-                  className="block truncate text-sm font-semibold hover:text-baton focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-baton"
-                >
-                  {member.memberName}
-                </Link>
+                {/* No standup on the last day: nothing to walk through, like the initials. */}
+                {last.held ? (
+                  <Link
+                    href={`/teams/${teamId}/walkthrough?date=${last.date}&member=${member.memberId}`}
+                    className="block truncate text-sm font-semibold hover:text-baton focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-baton"
+                  >
+                    {member.memberName}
+                  </Link>
+                ) : (
+                  <span className="block truncate text-sm font-semibold">{member.memberName}</span>
+                )}
                 <span className="flex items-center gap-2 text-xs uppercase tracking-[0.1em] text-dim">
                   {member.role === 'lead'
                     ? 'Lead'
@@ -221,6 +241,7 @@ export default function WeekGrid({
                 >
                   <Link
                     href={`/teams/${teamId}/walkthrough?date=${bar.date}&member=${bar.memberId}`}
+                    onClick={(e) => openDay(e, bar)}
                     title={`${bar.title}${bar.comment ? ` — ${bar.comment}` : ''}${
                       bar.startsBefore ? ' (started before this week)' : ''
                     }`}

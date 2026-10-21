@@ -57,10 +57,10 @@ export async function loadBoard(teamId: number, date: string) {
   });
   if (!standup) return null;
 
-  const members = await prisma.teamMember.findMany({
-    where: { teamId },
-    orderBy: { name: 'asc' },
-  });
+  const [members, later] = await Promise.all([
+    prisma.teamMember.findMany({ where: { teamId }, orderBy: { name: 'asc' } }),
+    prisma.standup.findFirst({ where: { teamId, date: { gt: date } }, select: { id: true } }),
+  ]);
   const absent = new Set(standup.absences.map((a) => a.memberId));
 
   const rows = members
@@ -110,6 +110,9 @@ export async function loadBoard(teamId: number, date: string) {
     date: standup.date,
     notes: standup.notes,
     createdBy: standup.createdBy,
+    // A later standup has started, so task edits here are refused — see
+    // requireOpenDay. Leave and notes still change.
+    closed: later !== null,
     members: rows,
   };
 }
@@ -296,6 +299,22 @@ export async function finishedSince(teamId: number, date: string, limit = 10) {
 }
 
 /**
+ * A day takes task changes only until the next standup starts. By then
+ * carry-forward has copied it, so a task added, ticked or reopened there never
+ * reaches the later day: it is lost, or done and open at once. Leave marks and
+ * day notes are not carried, so they stay open. Same rule for everyone.
+ */
+export async function requireOpenDay(standup: { teamId: number; date: string }) {
+  const later = await prisma.standup.findFirst({
+    where: { teamId: standup.teamId, date: { gt: standup.date } },
+    select: { date: true },
+  });
+  if (later) {
+    throw new HttpError(409, `The ${later.date} standup has already started; make the change there`);
+  }
+}
+
+/**
  * Create the standup for `date` and pull forward everything unfinished from the
  * most recent standup *before* it. Reaching for "most recent before" rather than
  * "yesterday" is what makes a skipped day work: skip Tuesday and Wednesday's
@@ -308,14 +327,8 @@ export async function startStandup(teamId: number, date: string, userId: number)
   if (existing) throw new HttpError(409, 'A standup already exists for that date');
 
   // A gap behind a day already held stays a gap: filling it would copy tasks
-  // the later day already carries. Work finished then goes on the later day.
-  const later = await prisma.standup.findFirst({
-    where: { teamId, date: { gt: date } },
-    select: { date: true },
-  });
-  if (later) {
-    throw new HttpError(409, `The ${later.date} standup is already held; tick that work there`);
-  }
+  // the later day already carries.
+  await requireOpenDay({ teamId, date });
 
   const previous = await prisma.standup.findFirst({
     where: { teamId, date: { lt: date } },

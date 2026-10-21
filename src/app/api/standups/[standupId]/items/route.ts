@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { errorResponse, HttpError, parseId, requireStandupAccess } from '@/lib/perms';
-import { isStatus } from '@/lib/standup';
+import { isStatus, requireOpenDay } from '@/lib/standup';
 import { cleanLinks } from '@/lib/links';
 
 interface Context {
@@ -12,6 +12,7 @@ export async function POST(req: NextRequest, context: Context) {
   try {
     const standupId = parseId((await context.params).standupId, 'standup ID');
     const { standup, member, isLead } = await requireStandupAccess(standupId);
+    await requireOpenDay(standup);
 
     const { memberId, title, links, comment, status } = await req.json();
     const targetId = Number(memberId);
@@ -57,7 +58,8 @@ export async function POST(req: NextRequest, context: Context) {
 export async function PATCH(req: NextRequest, context: Context) {
   try {
     const standupId = parseId((await context.params).standupId, 'standup ID');
-    const { member, isLead } = await requireStandupAccess(standupId);
+    const { standup, member, isLead } = await requireStandupAccess(standupId);
+    await requireOpenDay(standup);
 
     const { order } = await req.json();
     if (!Array.isArray(order) || order.some((id) => !Number.isInteger(id))) {
