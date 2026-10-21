@@ -138,6 +138,11 @@ model StandupItem {
   // subtraction, not a recursive walk up the carriedFrom chain. The date a
   // task first appeared never changes, so there is nothing to keep in sync.
   originDate    String   @default("") // YYYY-MM-DD the task first appeared
+  // ponytail: the newest note an earlier day wrote on this task, copied
+  // forward by carry-forward like originDate, so a quiet day does not wipe it
+  // and reading it is not a walk up the carriedFrom chain.
+  lastNote      String   @default("")
+  lastNoteDate  String   @default("") // YYYY-MM-DD the note was written
   displayOrder  Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

@@ -45,15 +45,7 @@ export function daysDragging(originDate: string, onDate: string): number {
 export async function loadBoard(teamId: number, date: string) {
   const standup = await prisma.standup.findUnique({
     where: { teamId_date: { teamId, date } },
-    include: {
-      items: {
-        include: {
-          links: true,
-          carriedFrom: { select: { comment: true, standup: { select: { date: true } } } },
-        },
-      },
-      absences: true,
-    },
+    include: { items: { include: { links: true } }, absences: true },
   });
   if (!standup) return null;
 
@@ -76,11 +68,11 @@ export async function loadBoard(teamId: number, date: string) {
           comment: i.comment,
           status: i.status,
           carriedFromId: i.carriedFromId,
-          // The note from the day it was carried from — one hop, never a
-          // walk. Hidden when it says nothing new.
+          // The newest note an earlier day wrote, carried with the task, so a
+          // quiet day in between does not hide it. Hidden when it says nothing new.
           previous:
-            i.carriedFrom?.comment && i.carriedFrom.comment !== i.comment
-              ? { date: i.carriedFrom.standup.date, comment: i.carriedFrom.comment }
+            i.lastNote && i.lastNote !== i.comment
+              ? { date: i.lastNoteDate, comment: i.lastNote }
               : null,
           // When someone typed it in, on the team's clock (the server's TZ).
           // A carried copy was made by the standup, so it has no such time.
@@ -183,8 +175,12 @@ export async function loadWeek(teamId: number, endDate: string, count = 5) {
       standupId: latest.standupId,
       memberId: latest.memberId,
       title: latest.title,
-      // Each day writes its own note; a day that wrote none keeps the last.
-      comment: sorted.findLast((r) => r.comment)?.comment ?? '',
+      // Each day writes its own note; a day that wrote none keeps the last,
+      // named by its day so an old note does not read as today's.
+      comment: (() => {
+        const noted = sorted.findLast((r) => r.comment);
+        return noted ? `${format(parseISO(dateOf.get(noted.id)!), 'EEE')}: ${noted.comment}` : '';
+      })(),
       status: latest.status,
       links: latest.links.map((l) => ({ url: l.url })),
       from: index.get(dateOf.get(sorted[0].id)!)!,
@@ -279,7 +275,11 @@ export async function finishedSince(teamId: number, date: string, limit = 10) {
     prisma.teamMember.findMany({ where: { teamId }, select: { id: true } }),
   ]);
 
-  type Day = { date: string; absent: boolean; items: { id: number; title: string; links: LinkRow[] }[] };
+  type Day = {
+    date: string;
+    absent: boolean;
+    items: { id: number; title: string; comment: string; links: LinkRow[] }[];
+  };
   const byMember: Record<number, Day[]> = {};
   for (const { id } of members) {
     byMember[id] = [];
@@ -290,7 +290,13 @@ export async function finishedSince(teamId: number, date: string, limit = 10) {
         absent,
         items: s.items
           .filter((i) => i.memberId === id)
-          .map((i) => ({ id: i.id, title: i.title, links: i.links.map((l) => ({ url: l.url })) })),
+          .map((i) => ({
+            id: i.id,
+            title: i.title,
+            // On a finished task the note is usually how it finished.
+            comment: i.comment,
+            links: i.links.map((l) => ({ url: l.url })),
+          })),
       });
       if (!absent) break;
     }
@@ -361,8 +367,11 @@ export async function startStandup(teamId: number, date: string, userId: number)
           standupId: standup.id,
           memberId: item.memberId,
           title: item.title,
-          // A comment is that day's note; tomorrow writes its own.
+          // A comment is that day's note; tomorrow writes its own, and the
+          // newest one so far rides along as lastNote.
           comment: '',
+          lastNote: item.comment || item.lastNote,
+          lastNoteDate: item.comment ? previous!.date : item.lastNoteDate,
           // A blocked task stays blocked; anything else lands as open.
           status: item.status === 'blocked' ? 'blocked' : 'open',
           carriedFromId: item.id,
@@ -426,6 +435,8 @@ export async function reopenItem(itemId: number, standupId: number) {
       memberId: item.memberId,
       title: item.title,
       comment: '', // that day's note, like carry-forward
+      lastNote: item.comment || item.lastNote,
+      lastNoteDate: item.comment ? item.standup.date : item.lastNoteDate,
       status: 'open',
       carriedFromId: item.id,
       originDate: item.originDate || item.standup.date,

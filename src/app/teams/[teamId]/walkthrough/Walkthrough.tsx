@@ -22,7 +22,7 @@ interface BoardData {
 interface SinceDay {
   date: string;
   absent: boolean;
-  items: { id: number; title: string; links: LinkRow[] }[];
+  items: { id: number; title: string; comment: string; links: LinkRow[] }[];
 }
 
 /** Minutes and seconds since this page opened — a standup that runs long says so. */
@@ -268,7 +268,7 @@ export default function Walkthrough({
                     return (
                       <li key={item.id} className="flex items-start gap-3 py-2.5">
                         <Check size={17} className="mt-1 shrink-0 text-baton" />
-                        <span className="flex flex-wrap items-center gap-2">
+                        <span className="flex min-w-0 flex-wrap items-center gap-2">
                           <span className="text-base leading-relaxed">{item.title}</span>
                           <LinkChips links={item.links} />
                           {backOnToday ? (
@@ -291,6 +291,11 @@ export default function Walkthrough({
                                 <RotateCcw size={12} /> Put back on today
                               </button>
                             )
+                          )}
+                          {item.comment && (
+                            <span className="basis-full border-l-2 border-line pl-2 text-sm leading-relaxed whitespace-pre-line break-words text-dim">
+                              {item.comment}
+                            </span>
                           )}
                         </span>
                       </li>

@@ -197,6 +197,36 @@ test('back from leave, run standup reaches past the away days to the last day he
   await prisma.absence.delete({ where: { id: away.id } });
 });
 
+test("a task's last note survives a quiet day, and a newer note replaces it", async () => {
+  // A team of its own, so the days here do not disturb the week above.
+  const own = await prisma.team.create({ data: { name: 'Last note', orgId: org.id, createdBy: user.id } });
+  const dev = await prisma.teamMember.create({
+    data: { teamId: own.id, name: 'Asha', email: 'asha@company.com', role: 'member' },
+  });
+  const [D1, D2, D3, D4, D5] = ['2026-04-06', '2026-04-07', '2026-04-08', '2026-04-09', '2026-04-10'];
+  const first = await prisma.standup.create({ data: { teamId: own.id, date: D1, createdBy: user.id } });
+  await prisma.standupItem.create({
+    data: { standupId: first.id, memberId: dev.id, title: 'Vendor API', comment: 'waiting on infra', originDate: D1 },
+  });
+
+  const noteOn = async (date: string) => (await loadBoard(own.id, date))!.members[0].items[0].previous;
+
+  await startStandup(own.id, D2, user.id); // nobody writes a note on D2
+  await startStandup(own.id, D3, user.id);
+  assert.deepEqual(await noteOn(D3), { date: D1, comment: 'waiting on infra' }, 'D2 was quiet, D1 still shows');
+
+  const d3 = await prisma.standupItem.findFirstOrThrow({ where: { standup: { teamId: own.id, date: D3 } } });
+  await prisma.standupItem.update({ where: { id: d3.id }, data: { comment: 'vendor replied' } });
+  await startStandup(own.id, D4, user.id);
+  assert.deepEqual(await noteOn(D4), { date: D3, comment: 'vendor replied' }, 'the newer note wins');
+
+  // Finished with a note: run standup the next day shows how it finished.
+  const d4 = await prisma.standupItem.findFirstOrThrow({ where: { standup: { teamId: own.id, date: D4 } } });
+  await prisma.standupItem.update({ where: { id: d4.id }, data: { status: 'done', comment: 'shipped behind a flag' } });
+  const since = await finishedSince(own.id, D5);
+  assert.equal(since[dev.id][0].items[0].comment, 'shipped behind a flag');
+});
+
 test('a day cannot be started twice', async () => {
   await assert.rejects(() => startStandup(team.id, THU, user.id), /already exists/);
 });
@@ -1054,9 +1084,9 @@ test('the week bar shows the newest note written, not a blank day', async () => 
     (await loadWeek(notes.id, TUE)).members.flatMap((m) => m.bars).find((b) => b.title === 'Long one')!;
 
   await say('');
-  assert.equal((await bar()).comment, 'API done, UI pending', "tuesday wrote nothing, so monday's stands");
+  assert.equal((await bar()).comment, 'Mon: API done, UI pending', "tuesday wrote nothing, so monday's stands, named");
   await say('UI half done');
-  assert.equal((await bar()).comment, 'UI half done');
+  assert.equal((await bar()).comment, 'Tue: UI half done');
 });
 
 test('a task added that day shows the time it went on, on the team clock', async () => {
