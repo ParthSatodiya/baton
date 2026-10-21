@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { format, parseISO } from 'date-fns';
+import { differenceInCalendarDays, format, parseISO } from 'date-fns';
 import { Check, ChevronLeft, ChevronRight, RotateCcw, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useRun } from '@/lib/useRun';
@@ -17,16 +17,11 @@ interface BoardData {
   members: MemberRow[];
 }
 
-interface Done {
-  id: number;
-  memberId: number;
-  title: string;
-  links: LinkRow[];
-}
-
-interface Completed {
+/** One standup in a person's "since last time", newest first. */
+interface SinceDay {
   date: string;
-  items: Done[];
+  absent: boolean;
+  items: { id: number; title: string; links: LinkRow[] }[];
 }
 
 /** Minutes and seconds since this page opened — a standup that runs long says so. */
@@ -47,20 +42,20 @@ function Elapsed() {
 
 /**
  * One person at a time, sized to be read off a shared screen: what they
- * finished last standup, then what they signed up for today.
+ * finished since they were last here, then what they signed up for today.
  */
 export default function Walkthrough({
   teamId,
   date,
   board,
-  completed,
+  finished,
   startMemberId,
   me,
 }: {
   teamId: number;
   date: string;
   board: BoardData | null;
-  completed: Completed | null;
+  finished: Record<number, SinceDay[]>;
   startMemberId: number | null;
   me: { memberId: number; isLead: boolean };
 }) {
@@ -111,7 +106,9 @@ export default function Walkthrough({
   }
 
   const member = members[at];
-  const yesterday = completed?.items.filter((i) => i.memberId === member.memberId) ?? [];
+  const since = finished[member.memberId] ?? [];
+  const lastHere = since[since.length - 1];
+  const awayDays = since.filter((d) => d.absent).length;
   const doneToday = member.items.filter((i) => i.status === 'done').length;
   // Same rule as the board: a lead may reopen anyone's task, a dev only their own.
   const editable = me.isLead || me.memberId === member.memberId;
@@ -213,46 +210,88 @@ export default function Walkthrough({
       <div className="mt-7 grid gap-9 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]">
         <section>
           <h3 className={`${ui.h2} border-b border-line-soft pb-2.5`}>
-            Finished {completed ? format(parseISO(completed.date), 'EEEE') : 'last standup'}
+            {!lastHere
+              ? 'Finished last standup'
+              : since.length === 1
+                ? `Finished ${format(parseISO(lastHere.date), 'EEEE')}`
+                : `Finished since ${format(
+                    parseISO(lastHere.date),
+                    // A weekday name is enough inside a week; past that, say which.
+                    differenceInCalendarDays(parseISO(date), parseISO(lastHere.date)) < 7
+                      ? 'EEEE'
+                      : 'EEE d MMM',
+                  )}`}
+            {awayDays > 0 && (
+              <small className="ml-2 font-sans text-sm normal-case tracking-normal text-dim">
+                away {awayDays} {awayDays === 1 ? 'day' : 'days'}
+              </small>
+            )}
           </h3>
-          {yesterday.length === 0 ? (
-            <p className="mt-3 text-base text-dim">Nothing finished.</p>
-          ) : (
-            <ul className="mt-1">
-              {yesterday.map((item) => {
-                const backOnToday = member.items.some((i) => i.carriedFromId === item.id);
-                return (
-                  <li key={item.id} className="flex items-start gap-3 py-2.5">
-                    <Check size={17} className="mt-1 shrink-0 text-baton" />
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span className="text-base leading-relaxed">{item.title}</span>
-                      <LinkChips links={item.links} />
-                      {backOnToday ? (
-                        <span className="text-xs text-dim">Back on today&apos;s plan</span>
-                      ) : (
-                        editable && (
-                          <button
-                            disabled={busy}
-                            onClick={() =>
-                              run(() =>
-                                api(`/api/standups/${board.id}/items/${item.id}/reopen`, {
-                                  method: 'POST',
-                                }),
-                              )
-                            }
-                            title="Put this task back on today's plan"
-                            className={`${ui.btn} ${ui.btnSubtle} px-2 py-0.5 text-xs`}
-                          >
-                            <RotateCcw size={12} /> Put back on today
-                          </button>
-                        )
-                      )}
+          {since.length === 0 && <p className="mt-3 text-base text-dim">Nothing finished.</p>}
+          {since.map((day) => (
+            <div
+              key={day.date}
+              className={`border-b border-line-soft ${
+                day.absent ? 'hatch-away -mx-2.5 my-1 rounded px-2.5 py-2.5' : 'pt-3 pb-1'
+              }`}
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="display text-base tracking-[0.04em]">
+                  {format(parseISO(day.date), 'EEE d MMM')}
+                </span>
+                {day.absent ? (
+                  <span className="rounded-full border border-warn/45 px-2 text-xs uppercase tracking-[0.12em] text-warn">
+                    On leave
+                  </span>
+                ) : (
+                  day.items.length > 0 && (
+                    <span className="text-xs uppercase tracking-[0.12em] text-dim">
+                      {day.items.length} done
                     </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+                  )
+                )}
+              </div>
+              {day.items.length === 0 && !day.absent && (
+                <p className="mt-1.5 mb-2 text-base text-dim">Nothing finished.</p>
+              )}
+              {day.items.length > 0 && (
+                <ul className="mt-1">
+                  {day.items.map((item) => {
+                    const backOnToday = member.items.some((i) => i.carriedFromId === item.id);
+                    return (
+                      <li key={item.id} className="flex items-start gap-3 py-2.5">
+                        <Check size={17} className="mt-1 shrink-0 text-baton" />
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="text-base leading-relaxed">{item.title}</span>
+                          <LinkChips links={item.links} />
+                          {backOnToday ? (
+                            <span className="text-xs text-dim">Back on today&apos;s plan</span>
+                          ) : (
+                            editable && (
+                              <button
+                                disabled={busy}
+                                onClick={() =>
+                                  run(() =>
+                                    api(`/api/standups/${board.id}/items/${item.id}/reopen`, {
+                                      method: 'POST',
+                                    }),
+                                  )
+                                }
+                                title="Put this task back on today's plan"
+                                className={`${ui.btn} ${ui.btnSubtle} px-2 py-0.5 text-xs`}
+                              >
+                                <RotateCcw size={12} /> Put back on today
+                              </button>
+                            )
+                          )}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          ))}
         </section>
 
         <section>

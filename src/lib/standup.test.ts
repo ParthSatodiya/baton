@@ -19,6 +19,7 @@ type Audit = typeof import('@/lib/audit');
 type Export = typeof import('@/lib/export');
 let prisma: (typeof import('@/lib/db'))['default'];
 let startStandup: Lib['startStandup'];
+let finishedSince: Lib['finishedSince'];
 let loadWeek: Lib['loadWeek'];
 let loadBoard: Lib['loadBoard'];
 let weekColumns: Lib['weekColumns'];
@@ -55,7 +56,7 @@ before(async () => {
   execFileSync('npx', ['prisma', 'migrate', 'deploy'], { env: process.env, stdio: 'pipe' });
 
   prisma = (await import('@/lib/db')).default;
-  ({ startStandup, daysDragging, reopenItem, assignItem, loadBoard, loadWeek, weekColumns, stepDay } =
+  ({ startStandup, daysDragging, reopenItem, assignItem, loadBoard, loadWeek, weekColumns, stepDay, finishedSince } =
     await import('@/lib/standup'));
   ({ monthGrid, canStartOn } = await import('@/lib/days'));
   ({ taskLink } = await import('@/lib/links'));
@@ -160,6 +161,30 @@ test('finishing on wednesday stops the carry; the blocker keeps ageing', async (
   assert.deepEqual(items.map((i) => i.title), ['Waiting on infra']);
   assert.equal(items[0].originDate, MON);
   assert.equal(daysDragging(items[0].originDate, THU), 3, 'still counted from monday, not wednesday');
+});
+
+test('back from leave, run standup reaches past the away days to the last day here', async () => {
+  const wed = await prisma.standup.findUniqueOrThrow({
+    where: { teamId_date: { teamId: team.id, date: WED } },
+  });
+  const away = await prisma.absence.create({ data: { standupId: wed.id, memberId: asha.id } });
+
+  const since = await finishedSince(team.id, THU);
+  assert.deepEqual(
+    since[asha.id].map((d) => [d.date, d.absent, d.items.map((i) => i.title)]),
+    [
+      [WED, true, ['Ship login']],
+      [MON, false, ['Review PR']],
+    ],
+    'the away day, then monday, newest first'
+  );
+  assert.deepEqual(
+    since[bo.id].map((d) => d.date),
+    [WED],
+    'someone who was there sees only the last standup'
+  );
+
+  await prisma.absence.delete({ where: { id: away.id } });
 });
 
 test('a day cannot be started twice', async () => {

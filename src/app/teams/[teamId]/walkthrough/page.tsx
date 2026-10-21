@@ -1,5 +1,5 @@
 import { pageMembership } from '@/lib/page';
-import { dateParam, loadBoard, previousCompleted } from '@/lib/standup';
+import { dateParam, loadBoard, finishedSince } from '@/lib/standup';
 import NoAccess from '@/components/NoAccess';
 import Walkthrough from './Walkthrough';
 
@@ -19,9 +19,9 @@ export default async function WalkthroughPage({
   const asked = q.member ? Number(q.member) : null;
   const startMemberId = asked !== null && !Number.isNaN(asked) ? asked : null;
 
-  const [board, completed] = await Promise.all([
+  const [board, finished] = await Promise.all([
     loadBoard(teamId, date),
-    previousCompleted(teamId, date),
+    finishedSince(teamId, date),
   ]);
 
   return (
@@ -31,7 +31,7 @@ export default async function WalkthroughPage({
       teamId={teamId}
       date={date}
       board={board}
-      completed={completed}
+      finished={finished}
       startMemberId={startMemberId}
       me={{ memberId: ctx.member?.id ?? 0, isLead: ctx.isLead }}
     />

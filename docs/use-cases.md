@@ -90,6 +90,9 @@ is nine days old no matter whose row it sits in now.
 Tick **On leave**. Their unfinished work keeps carrying forward while they are
 out, so it is all still there when they come back, and Reports counts their
 absent days separately rather than reading them as zero output.
+When they are back, Run standup shows what was finished on every day they
+missed, then their last day here, so nothing they did before leaving goes
+unheard.
 
 ### Someone joins mid-week
 

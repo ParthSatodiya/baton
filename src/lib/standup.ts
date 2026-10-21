@@ -5,6 +5,7 @@ import { isWeekend, shiftDays, stepDay, weekColumns } from '@/lib/days';
 export { stepDay, weekColumns };
 import prisma from '@/lib/db';
 import { HttpError } from '@/lib/http';
+import type { LinkRow } from '@/lib/links';
 
 export const STATUSES = ['open', 'done', 'blocked'] as const;
 export type Status = (typeof STATUSES)[number];
@@ -250,24 +251,48 @@ export async function doneCountsBefore(teamId: number, date: string) {
   return Object.fromEntries(rows.map((r) => [r.memberId, r._count._all]));
 }
 
-/** What got marked done on the standup before this date — for the "since last time" strip. */
-export async function previousCompleted(teamId: number, date: string) {
-  const previous = await prisma.standup.findFirst({
-    where: { teamId, date: { lt: date } },
-    orderBy: { date: 'desc' },
-    include: { items: { where: { status: 'done' }, include: { links: true } } },
-  });
-  if (!previous || previous.items.length === 0) return null;
+/**
+ * What each person finished since they were last at standup, newest day first.
+ * Walk back through the standups before `date` and stop at the first one they
+ * were present at, so someone back from leave sees every away day and then
+ * their last day here. Rows are standups held, not calendar days; `limit` keeps
+ * a month away from flooding the screen.
+ */
+export async function finishedSince(teamId: number, date: string, limit = 10) {
+  const [standups, members] = await Promise.all([
+    prisma.standup.findMany({
+      where: { teamId, date: { lt: date } },
+      orderBy: { date: 'desc' },
+      take: limit,
+      include: {
+        absences: { select: { memberId: true } },
+        items: {
+          where: { status: 'done' },
+          orderBy: { displayOrder: 'asc' },
+          include: { links: true },
+        },
+      },
+    }),
+    prisma.teamMember.findMany({ where: { teamId }, select: { id: true } }),
+  ]);
 
-  return {
-    date: previous.date,
-    items: previous.items.map((i) => ({
-      id: i.id,
-      memberId: i.memberId,
-      title: i.title,
-      links: i.links.map((l) => ({ url: l.url })),
-    })),
-  };
+  type Day = { date: string; absent: boolean; items: { id: number; title: string; links: LinkRow[] }[] };
+  const byMember: Record<number, Day[]> = {};
+  for (const { id } of members) {
+    byMember[id] = [];
+    for (const s of standups) {
+      const absent = s.absences.some((a) => a.memberId === id);
+      byMember[id].push({
+        date: s.date,
+        absent,
+        items: s.items
+          .filter((i) => i.memberId === id)
+          .map((i) => ({ id: i.id, title: i.title, links: i.links.map((l) => ({ url: l.url })) })),
+      });
+      if (!absent) break;
+    }
+  }
+  return byMember;
 }
 
 /**
