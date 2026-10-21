@@ -81,9 +81,17 @@ export default function Reports({
       completed: acc.completed + r.completed,
       stillOpen: acc.stillOpen + r.stillOpen,
       blocked: acc.blocked + r.blocked,
+      absentDays: acc.absentDays + r.absentDays,
     }),
-    { completed: 0, stillOpen: 0, blocked: 0 }
+    { completed: 0, stillOpen: 0, blocked: 0, absentDays: 0 }
   );
+
+  // The person's history, with the rest of the filters kept. The hash scrolls there.
+  function personHref(memberId: number) {
+    const next = new URLSearchParams(search.toString());
+    next.set('memberId', String(memberId));
+    return `/teams/${teamId}/reports?${next}#person`;
+  }
   // Bar length is the person's workload, so a quiet week does not look like a busy one.
   const busiest = Math.max(
     1,
@@ -132,17 +140,18 @@ export default function Reports({
         </div>
       </div>
 
-      <dl className="mt-6 grid grid-cols-2 border-y border-line sm:grid-cols-4">
+      <dl className="mt-6 grid grid-cols-2 border-y border-line sm:grid-cols-5">
         {[
           { label: 'Standups held', value: data.standupCount, tone: '' },
           { label: 'Finished', value: totals.completed, tone: 'text-baton' },
           { label: 'Still running', value: totals.stillOpen, tone: '' },
           { label: 'Blocked', value: totals.blocked, tone: totals.blocked ? 'text-stall' : '' },
+          { label: 'Days away', value: totals.absentDays, tone: '' },
         ].map((stat, i) => (
           <div
             key={stat.label}
             className={`px-4 py-3.5 ${i > 0 ? 'border-l border-line-soft' : ''} ${
-              i === 2 ? 'border-l-0 sm:border-l' : ''
+              i > 0 && i % 2 === 0 ? 'border-l-0 sm:border-l' : ''
             }`}
           >
             <dt className={ui.label}>{stat.label}</dt>
@@ -177,7 +186,19 @@ export default function Reports({
                 className="grid items-center gap-x-5 gap-y-2.5 border-b border-line-soft py-4 md:grid-cols-[170px_minmax(0,1fr)_auto]"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-semibold">{row.memberName}</p>
+                  <Link
+                    href={personHref(row.memberId)}
+                    className="block truncate font-semibold hover:text-baton"
+                    title={`${row.memberName}, day by day`}
+                    onClick={(e) => {
+                      // Same URL is no navigation, so nothing would scroll.
+                      if (row.memberId !== data.history?.memberId) return;
+                      e.preventDefault();
+                      document.getElementById('person')?.scrollIntoView();
+                    }}
+                  >
+                    {row.memberName}
+                  </Link>
                   {!row.isActive && (
                     <p className="text-xs uppercase tracking-[0.12em] text-dim">removed</p>
                   )}
@@ -253,7 +274,7 @@ export default function Reports({
         </section>
       )}
 
-      <section className="mt-9">
+      <section id="person" className="mt-9 scroll-mt-4">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2.5">
           <h2 className={ui.h2}>One person, day by day</h2>
           <div className="flex items-center gap-2">

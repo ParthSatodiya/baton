@@ -66,10 +66,12 @@ export async function buildReport(
     }))
     .sort((a, b) => b.days - a.days);
 
-  const history = memberId
+  // A memberId from another team, or a stale link, is not in the dropdown, so
+  // treat it as nobody picked rather than an empty "Unknown" history.
+  const history = memberId && nameById.has(memberId)
     ? {
         memberId,
-        memberName: nameById.get(memberId) ?? 'Unknown',
+        memberName: nameById.get(memberId)!,
         days: standups.map((s) => ({
           date: s.date,
           absent: s.absences.some((a) => a.memberId === memberId),
