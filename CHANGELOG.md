@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.2 — 2026-10-22
+
+### Added
+- Run standup shows everything someone finished since they were last at standup. After leave you see each day they missed, marked On leave, and then their last day here. (b5d4b07)
+- A task's latest note stays under it until someone writes a new one, even across a quiet day or a day on leave. (735a21d)
+- Finished tasks in Run standup show their note, and the week view's tooltip says which day a note is from. (735a21d)
+- Task comments can run to several lines; the box grows as you type and keeps your line breaks. (119ac51)
+- Reports show the team's total days away for the range, and clicking a name opens that person's day-by-day history. (4803e6c)
+- Clicking a task on the week opens the day you clicked, not always its latest day. (a7d0143)
+
+### Fixed
+- Tasks no longer get lost, or show as done and open at once, after an earlier day is edited. Once the next standup has started, an earlier day's tasks are read-only; leave and comments can still be changed there. (a7d0143)
+- A day the team skipped can no longer be started once a later standup exists, which duplicated tasks and hid what was finished. Tick that work on the later day instead. (4b6fe7e)
+
 ## 0.3.1 — 2026-10-15
 
 ### Added
