@@ -149,9 +149,9 @@ export default function Board({
                 ))}
                 <Link
                   href={`/teams/${teamId}/walkthrough?date=${date}`}
-                  className={`${ui.btn} ${ui.btnPrimary} ml-1 px-2.5 py-1!`}
+                  className={`${ui.btn} ${board.closed ? ui.btnGhost : ui.btnPrimary} ml-1 px-2.5 py-1!`}
                 >
-                  <Play size={13} /> Run
+                  <Play size={13} /> {board.closed ? 'Review' : 'Run'}
                 </Link>
               </>
             )}
@@ -238,12 +238,14 @@ export default function Board({
           {/* Running the standup is the thing this screen is for at 9:30, so it
               is the one baton control here. Rendered even when the day has no
               standup — disabled, so the chips beside it never move. */}
+          {/* A closed day is looked back on, not run — so it gets the ghost
+              button and its own name, and nobody runs last week by accident. */}
           {board ? (
             <Link
               href={`/teams/${teamId}/walkthrough?date=${date}`}
-              className={`${ui.btn} ${ui.btnPrimary} ml-1`}
+              className={`${ui.btn} ${board.closed ? ui.btnGhost : ui.btnPrimary} ml-1`}
             >
-              <Play size={15} /> Run standup
+              <Play size={15} /> {board.closed ? 'Review standup' : 'Run standup'}
             </Link>
           ) : (
             <span

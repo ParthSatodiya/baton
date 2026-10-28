@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { differenceInCalendarDays, format, parseISO } from 'date-fns';
-import { Check, ChevronLeft, ChevronRight, RotateCcw, X } from 'lucide-react';
+import { CalendarClock, Check, ChevronLeft, ChevronRight, Lock, RotateCcw, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useRun } from '@/lib/useRun';
 import { useLiveRefresh } from '@/lib/useLiveRefresh';
@@ -48,6 +48,7 @@ function Elapsed() {
 export default function Walkthrough({
   teamId,
   date,
+  today,
   board,
   finished,
   startMemberId,
@@ -55,6 +56,8 @@ export default function Walkthrough({
 }: {
   teamId: number;
   date: string;
+  /** The server's today — the same one the board uses. */
+  today: string;
   board: BoardData | null;
   finished: Record<number, SinceDay[]>;
   startMemberId: number | null;
@@ -87,6 +90,13 @@ export default function Walkthrough({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [step]);
+
+  // On a phone the name row scrolls sideways; keep whoever is up in it.
+  useEffect(() => {
+    document
+      .querySelector('[data-person][aria-current]')
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [at]);
 
   if (!board || members.length === 0) {
     return (
@@ -122,9 +132,31 @@ export default function Walkthrough({
         data-run-mode
         className="sticky top-0 z-30 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-track py-3"
       >
-        <h1 className={ui.h2}>Run standup</h1>
-        <p className="text-sm text-dim">{format(parseISO(date), 'EEE d MMM')}</p>
-        <p className="hidden text-xs text-dim sm:block">
+        {/* A closed day is looked back on, not run: no timer, and the title
+            says so. The tag says why tasks will not change, not just that the
+            day is old — a past day nobody has moved on from is still open. */}
+        <h1 className={ui.h2}>{board.closed ? 'Review standup' : 'Run standup'}</h1>
+        <p className="display text-xl">{format(parseISO(date), 'EEE d MMM')}</p>
+        {date !== today && (
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-warn/45 px-2.5 py-0.5 text-xs uppercase tracking-[0.12em] text-warn">
+              {board.closed ? (
+                <>
+                  <Lock size={12} aria-hidden="true" /> Read-only
+                  <span className="max-sm:hidden"> · a later standup started</span>
+                </>
+              ) : (
+                <>
+                  <CalendarClock size={12} aria-hidden="true" /> Not today
+                </>
+              )}
+            </span>
+            <Link href={`/teams/${teamId}`} className="text-sm text-dim hover:text-baton">
+              Today&apos;s board →
+            </Link>
+          </p>
+        )}
+        <p className="hidden text-xs text-dim lg:block">
           <kbd className="rounded border border-line border-b-2 px-1.5 py-0.5">←</kbd>{' '}
           <kbd className="rounded border border-line border-b-2 px-1.5 py-0.5">→</kbd> to move
         </p>
@@ -133,7 +165,7 @@ export default function Walkthrough({
           <span className="tabular-nums">
             {at + 1} of {members.length}
           </span>
-          <Elapsed />
+          {!board.closed && <Elapsed />}
           <span className="flex items-center gap-1.5">
             <button
               onClick={() => step(-1)}
@@ -331,14 +363,20 @@ export default function Walkthrough({
         </section>
       </div>
 
-      {/* One lane a person: filled once you have been through them. */}
-      <div className="mt-9 flex flex-wrap justify-center gap-4 border-t border-line pt-5">
+      {/* One lane a person: filled once you have been through them. It sticks to
+          the bottom so anyone is one click away, and stays one line — a long
+          team scrolls sideways rather than eating the screen. */}
+      <nav
+        aria-label="People"
+        className="sticky bottom-0 z-20 mt-9 flex justify-center-safe gap-4 overflow-x-auto border-t border-line bg-track pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+      >
         {members.map((m, i) => (
           <button
             key={m.memberId}
+            data-person
             onClick={() => setAt(i)}
-            aria-current={i === at}
-            className="flex flex-col items-center gap-1.5 text-xs"
+            aria-current={i === at ? 'step' : undefined}
+            className="flex shrink-0 cursor-pointer flex-col items-center gap-1.5 whitespace-nowrap text-xs"
           >
             <span
               className={`block h-1.5 w-9 rounded-full ${
@@ -357,7 +395,7 @@ export default function Walkthrough({
             </span>
           </button>
         ))}
-      </div>
+      </nav>
     </div>
   );
 }

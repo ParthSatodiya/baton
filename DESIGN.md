@@ -285,7 +285,14 @@ switching org or team is rare and moving between a team's places is not. A
 section heading that should follow you down a long page uses `ui.stickyHead`,
 which sits at `top-nav` under the tabs — its section then takes `mt-6`, not
 `mt-9`, since the heading brings its own `pt-3`. Run mode hides both rows and
-sticks its own bar instead. Nothing on an org page sticks except the audit
+sticks its own bar instead, with its row of people stuck to the bottom — one
+line, scrolling sideways on a phone.
+
+**A day that is not today says so.** Run mode puts the date in Anton in its
+bar, and off today it adds a warn tag with words and an icon: *Not today* when
+the day is still open, *Read-only* with a lock once a later standup has started.
+A closed day is reviewed, not run — the board's button turns ghost and reads
+"Review standup", and run mode drops its timer. Nothing on an org page sticks except the audit
 log's day headings.
 
 **The board's two-step header.** Once the board's date title scrolls up under

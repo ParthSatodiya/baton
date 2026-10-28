@@ -1,5 +1,5 @@
 import { pageMembership } from '@/lib/page';
-import { dateParam, loadBoard, finishedSince } from '@/lib/standup';
+import { dateParam, loadBoard, finishedSince, today } from '@/lib/standup';
 import NoAccess from '@/components/NoAccess';
 import Walkthrough from './Walkthrough';
 
@@ -30,6 +30,7 @@ export default async function WalkthroughPage({
       key={`${date}:${startMemberId ?? ''}`}
       teamId={teamId}
       date={date}
+      today={today()}
       board={board}
       finished={finished}
       startMemberId={startMemberId}
