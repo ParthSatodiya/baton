@@ -111,10 +111,12 @@ export default function WeekGrid({
           ))}
         </div>
 
+        {/* A busy week is a wall of fills, hatches and outlines; lighting the
+            row under the pointer (or the keyboard) ties a bar to its person. */}
         {week.members.map((member) => (
           <div
             key={member.memberId}
-            className="group grid border-t border-line-soft first:border-t-line"
+            className="group grid border-t border-line-soft transition-colors first:border-t-line hover:bg-chalk/8 hover:shadow-[inset_3px_0_0_var(--color-baton)] has-focus-visible:bg-chalk/8"
             style={track}
           >
             <div className="flex items-center gap-2.5 py-3 pr-3">
