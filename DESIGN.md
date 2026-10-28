@@ -288,6 +288,13 @@ which sits at `top-nav` under the tabs — its section then takes `mt-6`, not
 sticks its own bar instead. Nothing on an org page sticks except the audit
 log's day headings.
 
+**The board's two-step header.** Once the board's date title scrolls up under
+the tabs, a compact copy of the day — arrows, short date, the three figures and
+Run — docks into the right end of row two (`#board-dock`, filled by a portal
+from `Board.tsx`), and leaves again on the way back up. It is the same controls
+twice, never at once, so it does not break "only places in row two". Below `md`
+it is the date and Run; below `sm`, Run alone.
+
 A count on a tab is data about the page, not part of its name: it sits in its own
 chip (`bg-chalk/10`, baton-tinted on the open tab) and turns `stall` when
 something on that page is blocked. Never append a bare number to a label.

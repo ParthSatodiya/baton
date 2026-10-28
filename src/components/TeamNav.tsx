@@ -88,6 +88,9 @@ export default function TeamNav({
             )}
           </Link>
         ))}
+        {/* The board docks its day's controls here once its title scrolls
+            away — see Board.tsx. Empty on every other page. */}
+        <div id="board-dock" className="ml-auto flex items-center" />
       </div>
     </nav>
   );

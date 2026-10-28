@@ -1,6 +1,7 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
@@ -71,10 +72,92 @@ export default function Board({
   const doneToday = items.filter((i) => i.status === 'done').length;
   const blockedToday = items.filter((i) => i.status === 'blocked').length;
   const running = items.length - doneToday - blockedToday;
+  // The day's three figures, and the week's filter — the same control, here and
+  // in the dock.
+  const chips = [
+    { status: 'done', label: 'finished', count: doneToday, on: 'bg-baton text-baton-ink' },
+    { status: 'open', label: 'running', count: running, on: 'bg-chalk/12' },
+    { status: 'blocked', label: 'blocked', count: blockedToday, on: 'border-stall bg-stall/10 text-chalk' },
+  ];
+
+  // Step two of the header: once the big date has gone up under the team tabs,
+  // a compact copy of the day's controls docks into the tab row (TeamNav's
+  // #board-dock), and leaves again on the way back up.
+  const title = useRef<HTMLHeadingElement>(null);
+  const [docked, setDocked] = useState(false);
+  useEffect(() => {
+    const nav = document.getElementById('board-dock')?.closest('nav');
+    if (!nav || !title.current) return;
+    const watch = new IntersectionObserver(
+      ([e]) => setDocked(!e.isIntersecting && e.boundingClientRect.top < nav.offsetHeight),
+      { rootMargin: `-${nav.offsetHeight}px 0px 0px 0px` },
+    );
+    watch.observe(title.current);
+    return () => watch.disconnect();
+  }, []);
 
   return (
     <div className="space-y-5">
       <TabMark alert={needsYou} />
+
+      {/* Only ever true after mount, so the portal never runs on the server.
+          Below md it is just the day and Run, below sm just Run: the tabs come
+          first, and the rest needs the room they leave on a wider screen. Its buttons take py-1!, since
+          ui.btn's py-2 otherwise wins and fills the 48px tab row. */}
+      {docked &&
+        createPortal(
+          <div
+            role="group"
+            aria-label="This day"
+            className="flex items-center gap-2 pr-3 pl-2 sm:pl-4 transition-[opacity,translate] duration-150 ease-out starting:translate-y-1 starting:opacity-0"
+          >
+            <button
+              onClick={() => goto(shift(-1))}
+              aria-label="Previous working day"
+              className={`${ui.btn} ${ui.btnSubtle} px-1.5 py-1! max-md:hidden`}
+            >
+              <ChevronLeft size={15} />
+            </button>
+            <span className="display whitespace-nowrap text-base max-sm:hidden">
+              {format(parseISO(date), 'EEE d MMM')}
+            </span>
+            <button
+              onClick={() => goto(shift(1))}
+              disabled={date >= today}
+              aria-label="Next working day"
+              className={`${ui.btn} ${ui.btnSubtle} px-1.5 py-1! disabled:opacity-30 max-md:hidden`}
+            >
+              <ChevronRight size={15} />
+            </button>
+            {board && (
+              <>
+                <span aria-hidden="true" className="h-5 w-px bg-line max-lg:hidden" />
+                {chips.map((chip) => (
+                  <button
+                    key={chip.status}
+                    onClick={() => toggle(chip.status)}
+                    aria-pressed={only.includes(chip.status)}
+                    title={`Show only ${chip.label}`}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs tabular-nums transition max-lg:hidden ${
+                      only.includes(chip.status) ? chip.on : 'border-transparent text-dim hover:text-chalk'
+                    }`}
+                  >
+                    <Swatch status={chip.status} />
+                    <b className="font-semibold">{chip.count}</b>
+                    <span className="sr-only">{chip.label}</span>
+                  </button>
+                ))}
+                <Link
+                  href={`/teams/${teamId}/walkthrough?date=${date}`}
+                  className={`${ui.btn} ${ui.btnPrimary} ml-1 px-2.5 py-1!`}
+                >
+                  <Play size={13} /> Run
+                </Link>
+              </>
+            )}
+          </div>,
+          document.getElementById('board-dock')!,
+        )}
 
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         {/* One date, not two: the title steps, and pressing it opens the picker.
@@ -106,7 +189,7 @@ export default function Board({
             </button>
           </div>
           {/* The date is the page's title as well as its control. */}
-          <h1>
+          <h1 ref={title}>
             <button
               ref={dateButton}
               onClick={() => setPicking((open) => !open)}
@@ -135,18 +218,8 @@ export default function Board({
           )}
         </div>
 
-        {/* The day's three figures, and the week's filter — the same control. */}
         <div className="flex flex-wrap items-center gap-2">
-          {[
-            { status: 'done', label: 'finished', count: doneToday, on: 'bg-baton text-baton-ink' },
-            { status: 'open', label: 'running', count: running, on: 'bg-chalk/12' },
-            {
-              status: 'blocked',
-              label: 'blocked',
-              count: blockedToday,
-              on: 'border-stall bg-stall/10 text-chalk',
-            },
-          ].map((chip) => (
+          {chips.map((chip) => (
             <button
               key={chip.status}
               onClick={() => toggle(chip.status)}
@@ -157,16 +230,7 @@ export default function Board({
                 only.includes(chip.status) ? chip.on : 'border-line text-dim hover:text-chalk'
               }`}
             >
-              <span
-                aria-hidden="true"
-                className={`size-2 rounded-[2px] ${
-                  chip.status === 'done'
-                    ? 'bg-baton'
-                    : chip.status === 'blocked'
-                      ? 'hatch border border-stall'
-                      : 'bg-chalk/35'
-                }`}
-              />
+              <Swatch status={chip.status} />
               <b className="font-semibold">{board ? chip.count : '—'}</b> {chip.label}
             </button>
           ))}
@@ -343,5 +407,17 @@ function Notes({
         dirty && <p className="mt-1 text-xs text-dim">Saves when you leave this field.</p>
       )}
     </div>
+  );
+}
+
+/** The finished / running / blocked square — fill, grey, hatch. */
+function Swatch({ status }: { status: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`size-2 rounded-[2px] ${
+        status === 'done' ? 'bg-baton' : status === 'blocked' ? 'hatch border border-stall' : 'bg-chalk/35'
+      }`}
+    />
   );
 }
