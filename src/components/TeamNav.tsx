@@ -13,7 +13,8 @@ interface Tab {
 
 /**
  * Row two of the header: the pages of one team, with the open one on a baton
- * underline. It never changes shape as you move around inside the team.
+ * underline. It never changes shape as you move around inside the team, and it
+ * sticks — row one is for switching, which is rare; this row is for moving.
  */
 export default function TeamNav({
   teamId,
@@ -47,16 +48,20 @@ export default function TeamNav({
   };
 
   return (
-    <nav aria-label="Team" className="-mb-px border-b border-line bg-raised">
+    <nav
+      data-chrome
+      aria-label="Team"
+      className="sticky top-0 z-30 -mb-px h-nav border-b border-line bg-raised"
+    >
       {/* Same column as the header above: px-1 plus each tab's px-3 puts the
           first label on the wordmark's 16px edge. */}
-      <div className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-1">
+      <div className="mx-auto flex h-full max-w-6xl gap-1 overflow-x-auto px-1">
         {tabs.map((tab) => (
           <Link
             key={tab.label}
             href={tab.href}
             aria-current={current(tab.href) ? 'page' : undefined}
-            className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm transition ${
+            className={`flex items-center whitespace-nowrap border-b-2 px-3 text-sm transition ${
               current(tab.href)
                 ? 'border-baton font-semibold text-chalk'
                 : 'border-transparent text-dim hover:text-chalk'

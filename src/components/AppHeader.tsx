@@ -40,7 +40,8 @@ export default async function AppHeader({
       : [];
 
   return (
-    <header className="relative border-b border-line bg-raised">
+    <header data-chrome className="relative z-40 border-b border-line bg-raised">
+      {/* z-40: the switcher menus open over the sticky team tabs below. */}
       {/* Up to eight links here and four more in the team tabs, on every page.
           The first Tab should be able to jump the lot. */}
       <a

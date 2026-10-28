@@ -161,7 +161,7 @@ export default function MemberSection({
       {!hideHeader && (
         /* pb-2, not py-3: a name should sit closer to its own tasks than two of
           those tasks sit to each other. 20px here against 24px between rows. */
-        <header className="flex flex-wrap items-center justify-between gap-2 pt-3 pb-2">
+        <header className={`${ui.stickyHead} flex flex-wrap items-center justify-between gap-2 pb-2`}>
           {/* The identity block is the link, not the whole card — the rest of the
             card is buttons, inputs and drag targets. No aria-label: it would
             replace the content and hide "on leave", the role and the counts. */}

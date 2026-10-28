@@ -116,7 +116,12 @@ export default function Walkthrough({
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line pb-3">
+      {/* The meeting runs off this bar, so it never scrolls away. data-run-mode
+          also hides the app header and team tabs — see globals.css. */}
+      <div
+        data-run-mode
+        className="sticky top-0 z-30 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-track py-3"
+      >
         <h1 className={ui.h2}>Run standup</h1>
         <p className="text-sm text-dim">{format(parseISO(date), 'EEE d MMM')}</p>
         <p className="hidden text-xs text-dim sm:block">

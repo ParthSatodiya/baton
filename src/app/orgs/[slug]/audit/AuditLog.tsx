@@ -131,17 +131,18 @@ export default function AuditLog({
       )}
 
       <ul className="mt-5">
-        {events.map((event, i) => {
-          const day = format(parseISO(event.at), 'EEEE d MMMM');
-          const newDay = i === 0 || day !== format(parseISO(events[i - 1].at), 'EEEE d MMMM');
-          return (
-            <li key={event.id}>
-              {newDay && (
-                <p className={`${ui.h2} border-b border-line pb-2.5 ${i > 0 ? 'mt-8' : ''}`}>
-                  {day}
-                </p>
-              )}
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line-soft py-3">
+        {/* One <li> a day, so the day's heading sticks for exactly its own
+            rows and the next day pushes it off. No team tabs here: top-0. */}
+        {days(events).map(([day, dayEvents], i) => (
+          <li key={day} className={i > 0 ? 'mt-5' : ''}>
+            <p className={`${ui.h2} sticky top-0 z-10 border-b border-line bg-track pt-3 pb-2.5`}>
+              {day}
+            </p>
+            {dayEvents.map((event) => (
+              <div
+                key={event.id}
+                className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line-soft py-3"
+              >
                 <time
                   dateTime={event.at}
                   className="w-12 shrink-0 text-xs text-dim tabular-nums"
@@ -157,13 +158,24 @@ export default function AuditLog({
                   {event.actorName}
                 </span>
               </div>
-            </li>
-          );
-        })}
+            ))}
+          </li>
+        ))}
         {events.length === 0 && (
           <li className="py-10 text-center text-sm text-dim">Nothing recorded in this range.</li>
         )}
       </ul>
     </div>
   );
+}
+
+/** Events arrive newest first, so one day's events are always neighbours. */
+function days(events: Event[]): [string, Event[]][] {
+  const out: [string, Event[]][] = [];
+  for (const event of events) {
+    const day = format(parseISO(event.at), 'EEEE d MMMM');
+    if (out.at(-1)?.[0] === day) out.at(-1)![1].push(event);
+    else out.push([day, [event]]);
+  }
+  return out;
 }

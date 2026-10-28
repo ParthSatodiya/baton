@@ -280,6 +280,14 @@ Two rows, and the second only exists inside a team:
   here. Running the standup is an action that belongs to a day, so it lives on
   the board beside that day, not in a row of management pages.
 
+**What sticks.** Row two sticks at `top-0`; row one scrolls away, because
+switching org or team is rare and moving between a team's places is not. A
+section heading that should follow you down a long page uses `ui.stickyHead`,
+which sits at `top-nav` under the tabs — its section then takes `mt-6`, not
+`mt-9`, since the heading brings its own `pt-3`. Run mode hides both rows and
+sticks its own bar instead. Nothing on an org page sticks except the audit
+log's day headings.
+
 A count on a tab is data about the page, not part of its name: it sits in its own
 chip (`bg-chalk/10`, baton-tinted on the open tab) and turns `stall` when
 something on that page is blocked. Never append a bare number to a label.

@@ -167,8 +167,8 @@ export default function Reports({
         counted once, not five times.
       </p>
 
-      <section className="mt-9">
-        <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-2.5">
+      <section className="mt-6">
+        <div className={`${ui.stickyHead} flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-2.5`}>
           <h2 className={ui.h2}>Per person</h2>
           <p className="text-xs text-dim">
             Bar length is their workload; fill is finished, running, blocked
@@ -243,8 +243,8 @@ export default function Reports({
       </section>
 
       {data.dragging.length > 0 && (
-        <section className="mt-9">
-          <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-2.5">
+        <section className="mt-6">
+          <div className={`${ui.stickyHead} flex flex-wrap items-baseline justify-between gap-2 border-b border-line pb-2.5`}>
             <h2 className={ui.h2}>Still running, oldest first</h2>
             <p className="text-xs text-dim">Days since the task first appeared</p>
           </div>
@@ -274,8 +274,8 @@ export default function Reports({
         </section>
       )}
 
-      <section id="person" className="mt-9 scroll-mt-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2.5">
+      <section id="person" className="mt-6 scroll-mt-16">
+        <div className={`${ui.stickyHead} flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2.5`}>
           <h2 className={ui.h2}>One person, day by day</h2>
           <div className="flex items-center gap-2">
             <label htmlFor="report-member" className={ui.label}>

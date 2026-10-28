@@ -17,6 +17,10 @@
   --color-stall-ink: #0d2540; /* text on a stall fill — 5.67:1, its own role */
   --color-warn: #f5b93f; /* dragging too long, away, waiting */
 
+  /* The team tabs' height: they stick, and whatever sticks below them sits
+     at `top-nav`. */
+  --spacing-nav: 3rem;
+
   --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-anton), Impact, ui-sans-serif, sans-serif;
 
@@ -98,9 +102,14 @@ body {
   }
 }
 
-/* The skip link lands here; keep the heading clear of the sticky header. */
+/* The skip link lands here; keep the heading clear of the sticky team tabs. */
 #main {
-  scroll-margin-top: 1rem;
+  scroll-margin-top: calc(var(--spacing-nav) + 1rem);
+}
+
+/* Run mode is on the meeting screen: its own bar is the only chrome. */
+body:has([data-run-mode]) [data-chrome] {
+  display: none;
 }
 
 ::-webkit-scrollbar {

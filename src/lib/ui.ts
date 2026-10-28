@@ -22,6 +22,12 @@ export const ui = {
   h1: 'display text-3xl sm:text-4xl',
   h2: 'display text-sm tracking-[0.11em]',
   /**
+   * A section's heading row that stays under the team tabs until the next
+   * section pushes it off. It carries pt-3, so the section above drops mt-9 to
+   * mt-6 to keep the same rhythm.
+   */
+  stickyHead: 'sticky top-nav z-10 bg-track pt-3',
+  /**
    * A control that lives inside a row and gets out of the way. Hidden only
    * where a pointer can bring it back — see `.row-action` in globals.css,
    * which gates on `(hover: hover)`, not on width. Put it on the control
