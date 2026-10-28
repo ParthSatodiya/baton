@@ -13,11 +13,13 @@ export default function OrgSettings({
   name: initialName,
   emailDomain: initialDomain,
   logoUrl,
+  dataSummary,
 }: {
   slug: string;
   name: string;
   emailDomain: string;
   logoUrl: string;
+  dataSummary: string;
 }) {
   const router = useRouter();
   const { run, error, busy } = useRun();
@@ -160,6 +162,7 @@ export default function OrgSettings({
 
       <div className="space-y-3">
         <h2 className={`${ui.h2} border-b border-line pb-2.5`}>Your data</h2>
+        <p className="text-sm">{dataSummary}</p>
         <p className="text-xs text-dim">
           Every team, standup, task and audit entry in this organisation, as one JSON file. Nothing
           here is locked in. It is for reading and taking elsewhere — restoring a server is a

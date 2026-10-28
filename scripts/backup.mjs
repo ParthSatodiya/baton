@@ -14,7 +14,7 @@
  * compression, no schedule either — point cron at it.
  */
 import { DatabaseSync } from 'node:sqlite';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 // In the container DATABASE_URL is already set and there is no .env to read.
@@ -43,4 +43,7 @@ db.exec(`VACUUM INTO '${out.replace(/'/g, "''")}'`);
 db.close();
 
 console.log(out);
+// The snapshot is vacuumed, so this is the data's real size — the live file
+// can be larger by free pages and an unflushed WAL.
+console.log(`${(statSync(out).size / 1024 / 1024).toFixed(1)} MB`);
 console.log('Uploaded logos live under UPLOAD_DIR, not in here — copy that too.');
