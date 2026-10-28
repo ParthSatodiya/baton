@@ -31,8 +31,9 @@ npm run demo          # http://localhost:3000 → "Explore the demo team"
 ```
 
 No OAuth app, no `.env`, no account. It seeds a throwaway `prisma/demo.db` with
-an invented team and a week of standups behind it, and puts a password-less
-sign-in button on the login page. Change anything you like.
+an invented team and the last five working days of standups, ending today, and
+puts a password-less sign-in button on the login page. Change anything you like;
+the next `npm run demo` starts it fresh.
 
 Demo mode is local only: it needs `DEMO_MODE=1`, and it refuses to switch on
 under `NODE_ENV=production`, so it cannot exist in the Docker image or any real

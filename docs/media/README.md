@@ -28,10 +28,11 @@ it.
 
 ## Where the content comes from
 
-All three were recorded against `npm run seed:demo` — a fictional Northwind
-payments team, a fixed week in September 2026. Use it rather than your own data:
-the week never drifts with the clock, and nobody's real ticket numbers end up in
-a public repo.
+All three were recorded against `DEMO_WEEK=2026-09-07 npm run seed:demo` — a
+fictional Northwind payments team, pinned to that week in September 2026. Plain
+`npm run seed:demo` seeds the week ending today, so pass `DEMO_WEEK` (a Monday)
+when recording: the frames then never drift with the clock, and nobody's real
+ticket numbers end up in a public repo.
 
 ## Making one small enough
 
