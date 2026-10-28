@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.4.0 — 2026-10-29
+
+### Added
+- The team tabs stay at the top as you scroll. Run standup keeps its controls in view and drops the header, and long pages keep their section headings, people's names and audit days pinned while you scroll. (cebc323)
+- Scroll down the board and the day, its finished, running and blocked counts and Run standup move up into the tab bar, so they are always one click away. (0fa2f89)
+- The week view hatches the days a task was blocked, even once it is running again. In reports, unfinished tasks show how many standups they spent blocked. (5e2bbbf)
+- In the week view, the person row under your pointer lights up, so it is clear whose task each bar is. (4c50574)
+- Run standup shows the date large and says when you are looking at a past day, and why its tasks are locked. Locked days open as "Review standup", without the timer. The row of people stays at the bottom of the screen for one-click switching. (128732d)
+- Org settings show how far back your data goes and how much there is, and the backup script reports the database size. (a205466)
+- The demo team's standups now end today, so `npm run demo` opens on a full board instead of a week in September. (18252aa)
+
+### Fixed
+- Next.js updated to 16.4.3 for a security fix. (a0ba484)
+- In reports, a finished task's ticket and PR links are readable again in the day-by-day view. (1344c7f)
+
 ## 0.3.2 — 2026-10-22
 
 ### Added
