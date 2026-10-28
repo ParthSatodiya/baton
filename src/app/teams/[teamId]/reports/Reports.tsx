@@ -26,6 +26,9 @@ interface DraggingRow {
   links: LinkRow[];
   memberName: string;
   days: number;
+  /** Standups it has appeared at, and how many of those it sat blocked. */
+  standups: number;
+  blocked: number;
 }
 
 interface HistoryDay {
@@ -266,7 +269,18 @@ export default function Reports({
                   <span className="text-sm">{item.title}</span>
                   <LinkChips links={item.links} />
                 </div>
-                <p className="mt-0.5 text-xs text-dim">{item.memberName}</p>
+                <p className="mt-0.5 text-xs text-dim">
+                  {item.memberName}
+                  {/* Standups, not days: a task is only ever marked at a standup. */}
+                  {item.blocked > 0 && (
+                    <>
+                      {' · '}
+                      <span className="text-stall">
+                        blocked at {item.blocked} of {item.standups} standups
+                      </span>
+                    </>
+                  )}
+                </p>
               </div>
               <span className={`${pill} ${statusPill[item.status]}`}>{statusLabel[item.status]}</span>
             </div>

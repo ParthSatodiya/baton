@@ -54,8 +54,32 @@ export async function buildReport(
     .filter((r) => r.isActive || r.completed > 0 || r.stillOpen > 0 || r.blocked > 0);
 
   // Everything still unfinished, worst first — the "quietly rotting" list.
-  const dragging = (latest?.items ?? [])
-    .filter((i) => i.status !== 'done')
+  const unfinished = (latest?.items ?? []).filter((i) => i.status !== 'done');
+
+  // How many of its standups each of those spent blocked, over its whole life,
+  // not just this range. Every copy of a task shares its originDate, so one
+  // query fetches them all and the carriedFrom chain is walked in memory.
+  const copies = unfinished.length
+    ? await prisma.standupItem.findMany({
+        where: {
+          standup: { teamId },
+          originDate: { in: [...new Set(unfinished.map((i) => i.originDate))] },
+        },
+        select: { id: true, carriedFromId: true, status: true },
+      })
+    : [];
+  const copyById = new Map(copies.map((c) => [c.id, c]));
+  function blockedRecord(id: number) {
+    let standups = 0;
+    let blocked = 0;
+    for (let c = copyById.get(id); c; c = c.carriedFromId ? copyById.get(c.carriedFromId) : undefined) {
+      standups++;
+      if (c.status === 'blocked') blocked++;
+    }
+    return { standups, blocked };
+  }
+
+  const dragging = unfinished
     .map((i) => ({
       id: i.id,
       title: i.title,
@@ -63,6 +87,7 @@ export async function buildReport(
       links: i.links.map((l) => ({ url: l.url })),
       memberName: nameById.get(i.memberId) ?? 'Unknown',
       days: daysDragging(i.originDate, latest!.date),
+      ...blockedRecord(i.id),
     }))
     .sort((a, b) => b.days - a.days);
 

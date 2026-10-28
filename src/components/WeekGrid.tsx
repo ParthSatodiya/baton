@@ -19,6 +19,8 @@ export interface Bar {
   links: { url: string }[];
   from: number;
   to: number;
+  /** That day's status, one a column from `from` to `to`. */
+  days: string[];
   date: string;
   startsBefore: boolean;
   daysDragging: number;
@@ -247,17 +249,37 @@ export default function WeekGrid({
                     title={`${bar.title}${bar.comment ? ` — ${bar.comment}` : ''}${
                       bar.startsBefore ? ' (started before this week)' : ''
                     }`}
-                    className={`flex h-7 min-w-0 flex-1 items-center gap-2 rounded-full border px-3 text-xs transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-baton ${
+                    className={`relative isolate flex h-7 min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-full border px-3 text-xs transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-baton ${
                       bar.status === 'done'
-                        ? 'border-baton bg-baton text-baton-ink'
+                        ? 'border-baton text-baton-ink'
                         : bar.status === 'blocked'
-                          ? 'hatch border-stall text-chalk'
-                          : 'border-line bg-chalk/8 hover:border-baton'
+                          ? 'border-stall text-chalk'
+                          : 'border-line hover:border-baton'
                     } ${bar.startsBefore ? 'rounded-l-none border-l-4 border-l-warn' : ''}`}
                   >
+                    {/* The fill is drawn a day at a time: the task's own colour,
+                        hatched on the days it sat blocked — so a task that is
+                        running now still shows the days it was stuck. The day
+                        count is the task's; these segments are only its past. */}
+                    <span
+                      aria-hidden="true"
+                      className={`absolute inset-0 -z-10 flex ${
+                        bar.status === 'done' ? 'bg-baton' : 'bg-chalk/8'
+                      }`}
+                    >
+                      {/* One fill under the lot and only the hatch per day, or
+                          the day joins show as seams. */}
+                      {bar.days.map((day, i) => (
+                        <span key={i} className={`flex-1 ${day === 'blocked' ? 'hatch' : ''}`} />
+                      ))}
+                    </span>
                     <span className="truncate">{bar.title}</span>
                     {/* Fill, hatch and outline say the state to the eye only. */}
-                    <span className="sr-only">, {statusLabel[bar.status]}</span>
+                    <span className="sr-only">
+                      , {statusLabel[bar.status]}
+                      {blockedOn(bar, week.columns).length > 0 &&
+                        `, blocked ${blockedOn(bar, week.columns).join(', ')}`}
+                    </span>
                     <span
                       className={`ml-auto shrink-0 tabular-nums ${
                         bar.status === 'done' ? 'text-baton-ink/65' : daysTone(bar.daysDragging)
@@ -370,5 +392,12 @@ export default function WeekGrid({
         )}
       </div>
     </div>
+  );
+}
+
+/** The weekdays a bar sat blocked, for the screen reader — the hatch says it to the eye. */
+function blockedOn(bar: Bar, columns: Week['columns']) {
+  return bar.days.flatMap((day, i) =>
+    day === 'blocked' ? [format(parseISO(columns[bar.from + i].date), 'EEE')] : [],
   );
 }

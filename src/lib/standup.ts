@@ -169,6 +169,14 @@ export async function loadWeek(teamId: number, endDate: string, count = 5) {
     const sorted = rows.sort((a, b) => dateOf.get(a.id)!.localeCompare(dateOf.get(b.id)!));
     const latest = sorted[sorted.length - 1];
     const latestDate = dateOf.get(latest.id)!;
+    const from = index.get(dateOf.get(sorted[0].id)!)!;
+    const to = index.get(latestDate)!;
+    // One status a column, so the bar can show the days it sat blocked. A
+    // column with no standup (a skipped day) keeps the day before's — nothing
+    // could change it.
+    const statusOn = new Map(sorted.map((r) => [dateOf.get(r.id)!, r.status]));
+    const days: string[] = [];
+    for (let c = from; c <= to; c++) days.push(statusOn.get(columns[c]) ?? days[days.length - 1]);
     return {
       // The newest row is the one a click should open: it holds today's status.
       id: latest.id,
@@ -183,8 +191,9 @@ export async function loadWeek(teamId: number, endDate: string, count = 5) {
       })(),
       status: latest.status,
       links: latest.links.map((l) => ({ url: l.url })),
-      from: index.get(dateOf.get(sorted[0].id)!)!,
-      to: index.get(latestDate)!,
+      from,
+      to,
+      days,
       date: latestDate,
       startsBefore: byId.get(key)!.carriedFromId !== null,
       daysDragging: daysDragging(latest.originDate, latestDate),

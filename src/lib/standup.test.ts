@@ -535,6 +535,18 @@ test('the week grid draws one bar a task, spanning the days it has been running'
   assert.equal(blocker.startsBefore, false, 'nothing of it sits before the window');
   assert.equal(blocker.daysDragging, 3, 'counted from Monday, not from the day before');
 
+  // A status a column, so the bar can hatch the days it sat blocked. The
+  // skipped Tuesday has no row; it keeps Monday's status.
+  const login = week.members.flatMap((m) => m.bars).find((b) => b.title === 'Ship login')!;
+  assert.deepEqual(login.days, ['open', 'open', 'done'], 'Mon running, Tue skipped, Wed finished');
+  assert.deepEqual(blocker.days, ['blocked', 'blocked', 'blocked', 'blocked']);
+
+  // The report counts standups, not days: Mon, Wed and Thu, blocked at all three.
+  const { buildReport } = await import('@/lib/reports');
+  const stuck = (await buildReport(team.id, MON, THU)).dragging.find(
+    (d) => d.title === 'Waiting on infra'
+  )!;
+  assert.deepEqual([stuck.blocked, stuck.standups], [3, 3]);
   // Three rows of the same task across three standups collapse into one bar.
   const bars = week.members.flatMap((m) => m.bars).filter((b) => b.title === 'Waiting on infra');
   assert.equal(bars.length, 1);
