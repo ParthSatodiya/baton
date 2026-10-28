@@ -330,7 +330,7 @@ export default function Reports({
                     }`}
                   >
                     {item.title}
-                    <LinkChips links={item.links} />
+                    <LinkChips links={item.links} onFill={item.status === 'done'} />
                     {item.carried && (
                       <small
                         className={`text-xs tabular-nums ${
