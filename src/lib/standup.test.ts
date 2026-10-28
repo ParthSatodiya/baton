@@ -114,6 +114,12 @@ test('monday: three tasks, one already finished', async () => {
       { standupId: monday.id, memberId: gone.id, title: 'Old work', status: 'open', originDate: MON },
     ],
   });
+  const ship = await prisma.standupItem.findFirstOrThrow({
+    where: { standupId: monday.id, title: 'Ship login' },
+  });
+  await prisma.standupItemLink.create({
+    data: { itemId: ship.id, url: 'https://acme.atlassian.net/browse/PLAT-7' },
+  });
   assert.equal(await prisma.standupItem.count({ where: { standupId: monday.id } }), 4);
 });
 
@@ -121,7 +127,7 @@ test('wednesday (tuesday skipped) carries monday forward, minus the finished one
   const wed = await startStandup(team.id, WED, user.id);
   const items = await prisma.standupItem.findMany({
     where: { standupId: wed.id },
-    include: { carriedFrom: { include: { standup: true } } },
+    include: { carriedFrom: { include: { standup: true } }, links: true },
   });
 
   assert.equal(
@@ -138,6 +144,11 @@ test('wednesday (tuesday skipped) carries monday forward, minus the finished one
   const blocked = items.find((i) => i.title === 'Waiting on infra')!;
   assert.equal(blocked.status, 'blocked', 'a blocked task stays blocked');
   assert.equal(items.find((i) => i.title === 'Ship login')!.status, 'open');
+  assert.deepEqual(
+    items.find((i) => i.title === 'Ship login')!.links.map((l) => l.url),
+    ['https://acme.atlassian.net/browse/PLAT-7'],
+    'the ticket rides along — a carried task must not lose its link'
+  );
 
   // Reached back over the skipped Tuesday to Monday.
   for (const item of items) {

@@ -97,7 +97,8 @@ async function main() {
           displayOrder: order++,
         },
       });
-      if (link && last) await prisma.standupItemLink.create({ data: { itemId: item.id, url: link } });
+      // Every copy, as carry-forward would have made it — not just the last.
+      if (link) await prisma.standupItemLink.create({ data: { itemId: item.id, url: link } });
       previous = item.id;
     }
   }
