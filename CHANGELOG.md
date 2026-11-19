@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1 — 2026-11-19
+
+### Added
+- Anyone on the team can mark a teammate on leave, so a standup run while the lead is away can mark the lead away too. (f215787)
+- A task carried from the last standup has a "Finished <day>" button, so a tick forgotten yesterday counts on yesterday rather than today. (a48f313)
+
 ## 0.4.0 — 2026-10-29
 
 ### Added
