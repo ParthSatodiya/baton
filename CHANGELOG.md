@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 — 2026-11-19
+
+### Added
+- Leads can rename or delete a team from its Members page. Deleting asks you to type the team name first, and removes its standups and tasks for good. (a9f0659)
+
+### Fixed
+- Pasting a very long list of addresses on the members page no longer stalls the server. (60eabe4)
+
 ## 0.4.1 — 2026-11-19
 
 ### Added
