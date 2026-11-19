@@ -101,6 +101,7 @@ export default function MemberSection({
   roster,
   standupId,
   editable,
+  canMarkLeave = editable,
   busy,
   run,
   doneLastStandup,
@@ -113,6 +114,8 @@ export default function MemberSection({
   roster: MemberRow[];
   standupId: number;
   editable: boolean;
+  /** Wider than editable: anyone who writes may mark anyone away. */
+  canMarkLeave?: boolean;
   busy: boolean;
   run: (fn: () => Promise<unknown>) => Promise<boolean>;
   doneLastStandup: number;
@@ -211,7 +214,7 @@ export default function MemberSection({
             </div>
           </Link>
 
-          {editable && (
+          {canMarkLeave && (
             <AbsenceToggle
               standupId={standupId}
               memberId={member.memberId}

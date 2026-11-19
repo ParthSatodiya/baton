@@ -61,7 +61,7 @@ export default function Walkthrough({
   board: BoardData | null;
   finished: Record<number, SinceDay[]>;
   startMemberId: number | null;
-  me: { memberId: number; isLead: boolean };
+  me: { memberId: number; isLead: boolean; canWrite: boolean };
 }) {
   const members = board?.members ?? [];
   const { run, error, busy } = useRun();
@@ -237,7 +237,7 @@ export default function Walkthrough({
             {doneToday}/{member.items.length}
           </p>
           <p className="mt-1 text-xs uppercase tracking-[0.12em] text-dim">done today</p>
-          {editable && (
+          {me.canWrite && (
             <span className="mt-2 flex justify-end">
               <AbsenceToggle
                 standupId={board.id}

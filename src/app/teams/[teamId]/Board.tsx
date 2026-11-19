@@ -336,6 +336,7 @@ export default function Board({
                 roster={board.members.filter((m) => m.isActive)}
                 standupId={board.id}
                 editable={me.canWrite && (me.isLead || me.memberId === member.memberId)}
+                canMarkLeave={me.canWrite}
                 busy={busy}
                 run={run}
                 doneLastStandup={doneLastStandup[member.memberId] ?? 0}

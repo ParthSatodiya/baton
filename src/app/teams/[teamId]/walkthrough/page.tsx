@@ -34,7 +34,7 @@ export default async function WalkthroughPage({
       board={board}
       finished={finished}
       startMemberId={startMemberId}
-      me={{ memberId: ctx.member?.id ?? 0, isLead: ctx.isLead }}
+      me={{ memberId: ctx.member?.id ?? 0, isLead: ctx.isLead, canWrite: ctx.canWrite }}
     />
   );
 }

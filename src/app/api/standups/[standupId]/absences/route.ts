@@ -1,25 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
-import { errorResponse, HttpError, parseId, requireStandupAccess } from '@/lib/perms';
+import { errorResponse, parseId, requireStandupAccess } from '@/lib/perms';
 import { requireTeamMember } from '@/lib/access';
 
 interface Context {
   params: Promise<{ standupId: string }>;
 }
 
-/** Toggle "on leave" for a member on this day. { memberId, absent: boolean } */
+/**
+ * Toggle "on leave" for a member on this day. { memberId, absent: boolean }
+ * Anyone who writes may mark anyone: whoever runs the standup when the lead is
+ * away has to be able to mark the lead away too.
+ */
 export async function PUT(req: NextRequest, context: Context) {
   try {
     const standupId = parseId((await context.params).standupId, 'standup ID');
-    const { standup, member, isLead } = await requireStandupAccess(standupId);
+    const { standup } = await requireStandupAccess(standupId);
 
     const { memberId, absent } = await req.json();
     const targetId = Number(memberId);
     if (!targetId) {
       return NextResponse.json({ error: 'memberId is required' }, { status: 400 });
-    }
-    if (!isLead && targetId !== member?.id) {
-      throw new HttpError(403, 'You can only mark yourself away');
     }
 
     await requireTeamMember(standup.teamId, targetId);
