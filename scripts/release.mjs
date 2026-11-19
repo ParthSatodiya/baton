@@ -140,7 +140,7 @@ export function prependEntry(existing, entry) {
  */
 export function sectionFor(changelog, version) {
   const lines = changelog.split('\n');
-  const start = lines.findIndex((l) => new RegExp(`^## ${version.replace(/\./g, '\\.')}(\\s|$)`).test(l));
+  const start = lines.findIndex((l) => l === `## ${version}` || l.startsWith(`## ${version} `));
   if (start === -1) return '';
   const rest = lines.slice(start + 1);
   const end = rest.findIndex((l) => l.startsWith('## '));

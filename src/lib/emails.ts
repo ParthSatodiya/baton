@@ -8,8 +8,9 @@ export interface Recipient {
   name: string;
 }
 
-// Deliberately loose: the org owns whatever domain it owns.
-const EMAIL = /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/;
+// Deliberately loose: the org owns whatever domain it owns. The last label
+// takes no dot, so a long run of dots is one pass rather than a backtrack each.
+const EMAIL = /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>.]+$/;
 
 export const isEmail = (value: string) => EMAIL.test(value);
 
@@ -37,8 +38,10 @@ export function parseRecipients(text: string) {
   const invalid: string[] = [];
   const seen = new Set<string>();
 
-  // Pull out "Name <addr>" pairs first, then split whatever is left.
-  const rest = text.replace(/([^<,;\n]*)<([^>]+)>/g, (_m, rawName: string, rawEmail: string) => {
+  // Pull out "Name <addr>" pairs first, then split whatever is left. A name
+  // only starts after a separator or the last pair's ">", and stops at any
+  // bracket, so a long paste is read once rather than once a character.
+  const rest = text.replace(/(?<=^|[,;\n>])([^<>,;\n]*)<([^<>]+)>/g, (_m, rawName: string, rawEmail: string) => {
     add(rawEmail.trim(), rawName.trim().replace(/^["']|["']$/g, ''));
     return ' ';
   });

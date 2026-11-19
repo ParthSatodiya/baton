@@ -421,6 +421,13 @@ test('a pasted list of addresses becomes people with names', () => {
   assert.deepEqual(invalid, ['not-an-address']);
 });
 
+test('a huge paste is read in one pass, not once a character', () => {
+  // Both used to backtrack: 50k characters took six seconds each.
+  const started = Date.now();
+  for (const junk of ['+', '>', '.', 'a<']) parseRecipients(`x@y.${junk.repeat(50_000)}`);
+  assert.ok(Date.now() - started < 500, `took ${Date.now() - started}ms`);
+});
+
 test('a link chip is labelled from its provider', () => {
   assert.deepEqual(taskLink('https://acme.atlassian.net/browse/PROJ-1234'), {
     url: 'https://acme.atlassian.net/browse/PROJ-1234',
