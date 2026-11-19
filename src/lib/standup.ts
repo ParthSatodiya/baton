@@ -49,10 +49,23 @@ export async function loadBoard(teamId: number, date: string) {
   });
   if (!standup) return null;
 
-  const [members, later] = await Promise.all([
+  const [members, later, previous] = await Promise.all([
     prisma.teamMember.findMany({ where: { teamId }, orderBy: { name: 'asc' } }),
     prisma.standup.findFirst({ where: { teamId, date: { gt: date } }, select: { id: true } }),
+    prisma.standup.findFirst({
+      where: { teamId, date: { lt: date } },
+      orderBy: { date: 'desc' },
+      select: { id: true, date: true },
+    }),
   ]);
+  const carriedFrom = new Map(
+    (
+      await prisma.standupItem.findMany({
+        where: { id: { in: standup.items.flatMap((i) => i.carriedFromId ?? []) } },
+        select: { id: true, standupId: true, memberId: true, status: true },
+      })
+    ).map((o) => [o.id, o]),
+  );
   const absent = new Set(standup.absences.map((a) => a.memberId));
 
   const rows = members
@@ -82,6 +95,13 @@ export async function loadBoard(teamId: number, date: string) {
               : null,
           links: i.links.map((l) => ({ url: l.url })),
           daysDragging: daysDragging(i.originDate, date),
+          // The day a forgotten tick can go back to — see finishEarlier.
+          finishEarlierOn:
+            later === null &&
+            previous &&
+            canFinishEarlier(i, carriedFrom.get(i.carriedFromId ?? 0), previous.id)
+              ? previous.date
+              : null,
         }));
       // Keep a deactivated member visible on days they still have items.
       if (!member.isActive && items.length === 0) return null;
@@ -454,6 +474,60 @@ export async function reopenItem(itemId: number, standupId: number) {
     },
     include: { links: true },
   });
+}
+
+type Origin = { standupId: number; memberId: number; status: string };
+
+/**
+ * Carried unfinished from the last standup, by the same person: so ticking it
+ * there instead of here moves nothing but the day it counts on.
+ */
+function canFinishEarlier(copy: { memberId: number }, origin: Origin | undefined, previousId: number) {
+  return (
+    !!origin &&
+    origin.standupId === previousId &&
+    origin.memberId === copy.memberId &&
+    origin.status !== 'done'
+  );
+}
+
+/**
+ * Someone finished a task and forgot to tick it before the next standup
+ * started. Tick it on the day it was finished: the original goes done, taking
+ * today's title, links and note, and today's carried copy goes away — one
+ * transaction, so it is never done and open at once. The one task write
+ * ADR-0004 lets onto a closed day. Returns the date it now counts on.
+ */
+export async function finishEarlier(itemId: number) {
+  const copy = await prisma.standupItem.findUnique({
+    where: { id: itemId },
+    include: { standup: true, links: true, carriedFrom: { include: { standup: true } } },
+  });
+  if (!copy) throw new HttpError(404, 'Item not found');
+
+  const previous = await prisma.standup.findFirst({
+    where: { teamId: copy.standup.teamId, date: { lt: copy.standup.date } },
+    orderBy: { date: 'desc' },
+    select: { id: true },
+  });
+  const origin = copy.carriedFrom;
+  if (!origin || !previous || !canFinishEarlier(copy, origin, previous.id)) {
+    throw new HttpError(400, 'Only a task carried unfinished from the last standup can be finished there');
+  }
+
+  await prisma.$transaction([
+    prisma.standupItem.update({
+      where: { id: origin.id },
+      data: {
+        status: 'done',
+        title: copy.title,
+        comment: [origin.comment, copy.comment].filter(Boolean).join('\n'),
+        links: { deleteMany: {}, create: copy.links.map((l) => ({ url: l.url })) },
+      },
+    }),
+    prisma.standupItem.delete({ where: { id: copy.id } }),
+  ]);
+  return origin.standup.date;
 }
 
 /**

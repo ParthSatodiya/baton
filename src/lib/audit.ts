@@ -26,6 +26,7 @@ export const AUDIT_ACTIONS = {
   'standup.deleted': 'Standup deleted',
   'task.reassigned': 'Task handed over',
   'task.reopened': 'Task reopened',
+  'task.finished-earlier': 'Task ticked on an earlier day',
 } as const;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

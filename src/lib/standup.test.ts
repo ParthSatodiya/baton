@@ -28,6 +28,7 @@ let stepDay: Lib['stepDay'];
 let monthGrid: Days['monthGrid'];
 let canStartOn: Days['canStartOn'];
 let reopenItem: Lib['reopenItem'];
+let finishEarlier: Lib['finishEarlier'];
 let assignItem: Lib['assignItem'];
 let daysDragging: Lib['daysDragging'];
 let taskLink: Links['taskLink'];
@@ -57,7 +58,7 @@ before(async () => {
   execFileSync('npx', ['prisma', 'migrate', 'deploy'], { env: process.env, stdio: 'pipe' });
 
   prisma = (await import('@/lib/db')).default;
-  ({ startStandup, daysDragging, reopenItem, assignItem, loadBoard, loadWeek, weekColumns, stepDay, finishedSince, requireOpenDay } =
+  ({ startStandup, daysDragging, reopenItem, finishEarlier, assignItem, loadBoard, loadWeek, weekColumns, stepDay, finishedSince, requireOpenDay } =
     await import('@/lib/standup'));
   ({ monthGrid, canStartOn } = await import('@/lib/days'));
   ({ taskLink } = await import('@/lib/links'));
@@ -1131,4 +1132,41 @@ test('a task added that day shows the time it went on, on the team clock', async
   assert.equal(at('Before standup'), '09:42');
   assert.equal(at('Filled in later'), 'Wed 08:05', 'added on another day says which');
   assert.equal(at('Long one'), null, 'a carried copy was made by the standup, not typed by anyone');
+});
+
+test('a tick forgotten yesterday goes back to yesterday, and leaves nothing open today', async () => {
+  const late = await prisma.team.create({ data: { name: 'Late', orgId: org.id, createdBy: user.id } });
+  const [dev, other] = await Promise.all(
+    ['asha@company.com', 'bo@company.com'].map((email, n) =>
+      prisma.teamMember.create({ data: { teamId: late.id, name: `Dev${n}`, email } }),
+    ),
+  );
+  const mon = await prisma.standup.create({ data: { teamId: late.id, date: MON, createdBy: user.id } });
+  await prisma.standupItem.createMany({
+    data: [
+      { standupId: mon.id, memberId: dev.id, title: 'Forgot to tick', comment: 'Almost', originDate: MON },
+      { standupId: mon.id, memberId: dev.id, title: 'Handed over', originDate: MON },
+    ],
+  });
+  const tue = await startStandup(late.id, TUE, user.id);
+  const copy = (title: string) => prisma.standupItem.findFirstOrThrow({ where: { standupId: tue.id, title } });
+  await prisma.standupItem.update({ where: { id: (await copy('Forgot to tick')).id }, data: { comment: 'Merged last night' } });
+  await prisma.standupItem.update({ where: { id: (await copy('Handed over')).id }, data: { memberId: other.id } });
+
+  const offered = async () =>
+    (await loadBoard(late.id, TUE))!.members.flatMap((m) => m.items).map((i) => [i.title, i.finishEarlierOn]);
+  assert.deepEqual(Object.fromEntries(await offered()), { 'Forgot to tick': MON, 'Handed over': null },
+    'a task that changed hands would credit the wrong person');
+
+  assert.equal(await finishEarlier((await copy('Forgot to tick')).id), MON);
+  const monday = await prisma.standupItem.findFirstOrThrow({ where: { standupId: mon.id, title: 'Forgot to tick' } });
+  assert.equal(monday.status, 'done');
+  assert.equal(monday.comment, 'Almost\nMerged last night', "today's note goes back with it");
+  assert.equal(await prisma.standupItem.count({ where: { standupId: tue.id, title: 'Forgot to tick' } }), 0);
+  assert.deepEqual((await finishedSince(late.id, TUE))[dev.id][0].items.map((i) => i.title), ['Forgot to tick']);
+
+  await assert.rejects(finishEarlier((await copy('Handed over')).id), /carried unfinished/);
+  await startStandup(late.id, WED, user.id);
+  assert.equal((await loadBoard(late.id, TUE))!.members.flatMap((m) => m.items)[0].finishEarlierOn, null,
+    'a closed day offers nothing');
 });

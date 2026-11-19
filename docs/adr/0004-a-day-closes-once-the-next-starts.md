@@ -30,6 +30,13 @@ day stays a gap.
 **The same rule for everyone, leads included.** A lead editing an old day breaks
 the chain exactly as anyone else would.
 
+**One task write reaches back: a forgotten tick.** On the open day, a task
+carried unfinished from the last standup by the same person can be finished
+*there* instead (`finishEarlier`). The original goes done and today's copy is
+deleted in one transaction, so nothing is ever done and open at once — the
+failure this rule exists to stop. A copy that changed hands, or came back
+through a reopen, does not qualify: that would credit the wrong person or day.
+
 **What is not carried stays open:** leave marks, day notes and task comments.
 Writing them late cannot strand or double a task. A carried copy starts with an
 empty comment, so a note written on yesterday cannot leak into today.
@@ -46,10 +53,11 @@ Good:
 
 Bad, and accepted:
 
-- **An old day cannot be corrected.** Work finished on a skipped day, or found
-  late, is ticked on the latest day and counts as finished there: one day off,
-  same task, same age. A `doneOn` date would fix the attribution but touches
-  every report, and nobody has needed it.
+- **An old day cannot be corrected,** past the forgotten tick above. Work found
+  late from further back is ticked on the latest day and counts as finished
+  there: one day off, same task, same age. Work done over a weekend counts for
+  Friday. A `doneOn` date would fix the attribution but touches every report,
+  and nobody has needed it.
 - **Only the latest day can be deleted.** Deleting a day in the middle would
   take its ticked tasks with it and break the chains through it.
 

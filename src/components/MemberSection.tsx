@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import {
   Check,
+  CheckCheck,
   ChevronDown,
   ChevronUp,
   Circle,
@@ -32,6 +33,8 @@ export interface Item {
   /** "09:42", or "Wed 09:42" when typed on another day. Null on a carried copy. */
   addedAt: string | null;
   daysDragging: number;
+  /** The last standup's date, when a forgotten tick can still go back there. */
+  finishEarlierOn: string | null;
 }
 
 interface MemberRow {
@@ -614,6 +617,17 @@ function ItemRow({
                 <Icon size={13} />
               </button>
             ))}
+            {item.finishEarlierOn && (
+              <button
+                title={`Finished ${format(parseISO(item.finishEarlierOn), 'EEEE')}`}
+                aria-label={`Finished ${format(parseISO(item.finishEarlierOn), 'EEEE')}`}
+                disabled={busy}
+                onClick={() => run(() => api(`${url}/finish-earlier`, { method: 'POST' }))}
+                className="grid size-6 place-items-center rounded-md text-dim transition ease-out hover:bg-chalk/8 hover:text-chalk enabled:active:scale-95"
+              >
+                <CheckCheck size={13} />
+              </button>
+            )}
           </div>
 
           <button
