@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useRun } from '@/lib/useRun';
@@ -25,6 +26,7 @@ export default function Members({
   members,
   addable,
   org,
+  standupCount,
 }: {
   teamId: number;
   teamName: string;
@@ -34,13 +36,20 @@ export default function Members({
   /** People in the org who are not on this team yet. */
   addable: { email: string; name: string; returning: boolean }[];
   org: { name: string; slug: string };
+  /** Standups this team has held — what deleting it takes with it. */
+  standupCount: number;
 }) {
   const [form, setForm] = useState({ email: '', role: 'member' });
   const [saved, setSaved] = useState('');
   // Deactivating yourself hands your own access to the other lead — the one
   // change on this page you cannot undo, so it asks first.
   const [confirmingSelf, setConfirmingSelf] = useState(false);
-  const { run, error, busy } = useRun();
+  const { run, error, setError, busy } = useRun();
+  const router = useRouter();
+  const [newName, setTeamName2] = useState(teamName);
+  // Deleting is for good, so it waits for the team's name typed back.
+  const [deleting, setDeleting] = useState(false);
+  const [typed, setTyped] = useState('');
 
   /** Every save on this page is instant, so every save says what it did. */
   const save = (what: string, fn: () => Promise<unknown>) =>
@@ -274,6 +283,103 @@ export default function Members({
             An <strong className="font-medium">observer</strong> reads the board, the walkthrough
             and the reports, and changes nothing.
           </p>
+        </div>
+      )}
+
+      {isLead && (
+        <div className="space-y-4 pt-2">
+          <div className="border-b border-line pb-2.5">
+            <h2 className={ui.h2}>The team</h2>
+          </div>
+          <form
+            className="flex flex-wrap items-end gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              save(`Renamed to ${newName.trim()}`, () =>
+                api(`/api/teams/${teamId}`, {
+                  method: 'PUT',
+                  body: JSON.stringify({ name: newName }),
+                }),
+              );
+            }}
+          >
+            <div className="min-w-52 flex-1">
+              <label htmlFor="team-name" className={ui.label}>
+                Team name
+              </label>
+              <input
+                id="team-name"
+                required
+                value={newName}
+                onChange={(e) => setTeamName2(e.target.value)}
+                className={`${ui.input} mt-1 w-full`}
+              />
+            </div>
+            <button
+              disabled={busy || !newName.trim() || newName.trim() === teamName}
+              className={`${ui.btn} ${ui.btnGhost}`}
+            >
+              Rename
+            </button>
+          </form>
+
+          {deleting ? (
+            <form
+              className="space-y-3 rounded border border-stall/45 p-4"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                // Not through run(): its refresh would re-render a team that is gone.
+                try {
+                  await api(`/api/teams/${teamId}`, { method: 'DELETE' });
+                  router.replace(`/orgs/${org.slug}`);
+                } catch (err) {
+                  setError((err as Error).message);
+                }
+              }}
+            >
+              <p className="text-sm">
+                This deletes <strong className="font-medium">{teamName}</strong>
+                {standupCount > 0 &&
+                  `, its ${standupCount} ${standupCount === 1 ? 'standup' : 'standups'} and every task on them`}
+                . Reports lose it too. It cannot be undone.
+              </p>
+              <div>
+                <label htmlFor="delete-confirm" className={ui.label}>
+                  Type {teamName} to confirm
+                </label>
+                <input
+                  id="delete-confirm"
+                  autoFocus
+                  autoComplete="off"
+                  value={typed}
+                  onChange={(e) => setTyped(e.target.value)}
+                  className={`${ui.input} mt-1 w-full max-w-sm`}
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  disabled={busy || typed.trim() !== teamName}
+                  className={`${ui.btn} bg-stall text-stall-ink hover:brightness-105 disabled:opacity-40`}
+                >
+                  Delete forever
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleting(false);
+                    setTyped('');
+                  }}
+                  className={`${ui.btn} ${ui.btnSubtle}`}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button onClick={() => setDeleting(true)} className={`${ui.btn} ${ui.btnDanger}`}>
+              Delete team
+            </button>
+          )}
         </div>
       )}
     </div>

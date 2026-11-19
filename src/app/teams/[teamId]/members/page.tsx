@@ -19,6 +19,7 @@ export default async function MembersPage({ params }: { params: Promise<{ teamId
     where: { memberId: { in: members.map((m) => m.id) }, status: 'done' },
     _count: { _all: true },
   });
+  const standupCount = await prisma.standup.count({ where: { teamId } });
   const finishedBy = new Map(finished.map((f) => [f.memberId, f._count._all]));
 
   // You can only add someone who is already in the org, so the page offers
@@ -46,6 +47,7 @@ export default async function MembersPage({ params }: { params: Promise<{ teamId
       members={members.map((m) => ({ ...m, finished: finishedBy.get(m.id) ?? 0 }))}
       addable={inOrg.map((p) => ({ ...p, returning: removed.has(p.email) }))}
       org={{ name: ctx.org.name, slug: ctx.org.slug }}
+      standupCount={standupCount}
     />
   );
 }
